@@ -2,21 +2,24 @@
 <menu xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".MainActivity">
-    <item
-        android:id="@+id/action_refresh_songlist"
-        android:title="@string/refresh_songlist_title"
-        android:icon="@drawable/refresh"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/action_send_command"
-        android:title="@string/action_send_command_title"
-        app:showAsAction="never"
-        android:icon="@drawable/debug"
-        />
+    tools:context=".ui.MainActivity">
+
     <item
         android:id="@+id/action_connect"
         android:title="@string/connect_action_title"
-        android:icon="@android:drawable/stat_sys_warning"
-        app:showAsAction="ifRoom" />
+        android:icon="@drawable/disconnected"
+        app:showAsAction="always" />
+
+    <!-- TODO: Delete old toolbar item -->
+    <!-- <item
+        android:id="@+id/action_send_command"
+        android:title="@string/action_send_command_title"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/debug"
+        /> -->
+
+    <item android:id="@+id/action_settings"
+    android:title="@string/action_settings_title"
+    android:icon="@drawable/ic_settings_black_24dp"
+    app:showAsAction="ifRoom" />
 </menu>

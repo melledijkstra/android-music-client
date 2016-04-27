@@ -1,8 +1,18 @@
 <resources>
-    <string name="app_name">MusicPlayerClient</string>
-    <string name="send">Send</string>
-    <string name="action_settings">Settings</string>
+    <!-- General -->
+    <string name="app_name">Melon Music Player</string>
+
+    <!-- Toolbar Actions -->
     <string name="connect_action_title">Connect</string>
     <string name="refresh_songlist_title">Refresh song list</string>
-    <string name="action_send_command_title">Send command</string>
+    <string name="action_settings_title">Settings</string>
+
+    <!-- Settings Fragment -->
+    <string name="settings_activity_title">Settings</string>
+
+    <!-- Splash Activity -->
+    <string name="splash_screen_logo_desc">Splash screen logo</string>
+    <string name="splash_screen_title">MMP</string>
+    <string name="btn_connect_title">Connect</string>
+    <string name="default_ip">192.168.1.40</string>
 </resources>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="Connection">
+
+        <EditTextPreference
+            android:title="Host IP"
+            android:summary="The host ip for music player server"
+            android:key="host_ip"
+            android:icon="@drawable/ic_action_wifi"
+            android:defaultValue="192.168.1.40" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="UI Settings"
+        android:summary="Settings for User Experience">
+
+        <SwitchPreference
+            android:title="List on connect"
+            android:summary="Generate a list when connection is established with server?"
+            android:key="list_on_connect"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_view_list"
+            />
+
+        <SwitchPreference
+            android:title="Debug profiler"
+            android:summary="Show small listview in top-right corner with all incoming messages"
+            android:key="app_debug"
+            android:defaultValue="false"
+            android:icon="@drawable/debug"
+            />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
