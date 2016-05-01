@@ -35,4 +35,19 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="Music Player Settings">
+
+        <SwitchPreference
+            android:title="Fade transition"
+            android:summary="Make a fade transition when switching songs"
+            android:icon="@android:drawable/ic_menu_slideshow"
+            />
+
+        <SwitchPreference
+            android:title="Just a test setting"
+            android:summary="This setting makes no sense?" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

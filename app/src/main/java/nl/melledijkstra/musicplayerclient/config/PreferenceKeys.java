@@ -21,4 +21,6 @@ public class PreferenceKeys {
 
     public static final String DEBUG = "app_debug";
 
+    public static final String LIST_ON_CONNECT = "list_on_connect";
+
 }

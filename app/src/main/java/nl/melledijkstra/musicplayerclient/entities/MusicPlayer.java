@@ -25,21 +25,14 @@ public class MusicPlayer {
     public static final int DEFAULT_PORT = 1010;
     public static final int DEFAULT_TIMEOUT = 5000;
 
-    // The activity for updating UI
-    private MainActivity context;
-
     // List with songs
-    public List<String> songList = new ArrayList<>();
+    public ArrayList<String> songList = new ArrayList<>();
 
     // current playing song
     Song currentSong;
 
-    /**
-     * Constructor
-     * @param context The application context (Activity)
-     */
-    public MusicPlayer(MainActivity context) {
-        this.context = context;
+    public MusicPlayer() {
+
     }
 
     public void play() {
@@ -56,43 +49,6 @@ public class MusicPlayer {
 
     public Song getCurrentSong() {
         return currentSong;
-    }
-
-    /**
-     * Show a toast on the main thread
-     * @param message The message for the toast
-     * @param duration The duration for the length it has to show
-     */
-    private void ToastOnMainThread(final String message, final int duration) {
-        context.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(context, message, duration).show();
-            }
-        });
-    }
-
-    /**
-     * Show a toast on the main thread
-     * @param message The message for the toast
-     */
-    private void ToastOnMainThread(final String message) {
-        context.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
-    private void updateUI(final ActionMenuItemView item, final Drawable icon) {
-        Log.i(App.TAG,"Updating '"+item.toString()+"' with value '"+icon.toString()+"'");
-        context.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                item.setIcon(icon);
-            }
-        });
     }
 
 }

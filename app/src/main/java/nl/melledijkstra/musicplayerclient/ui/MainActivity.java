@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -19,50 +20,64 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.ConnectionService;
-import nl.melledijkstra.musicplayerclient.MMPM;
+import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
 import nl.melledijkstra.musicplayerclient.ui.fragments.MusicPlayerFragment;
 import nl.melledijkstra.musicplayerclient.ui.fragments.ViewPagerAdapter;
 import nl.melledijkstra.musicplayerclient.ui.fragments.YoutubeFragment;
 
+/**
+ * Controller for the Main screen. This screen has the controls and information about the musicplayer
+ */
 public class MainActivity extends AppCompatActivity {
 
     // The connection service
     public ConnectionService mBoundService;
 
+    // Variable for checking if service is bound
     private boolean mBound = false;
 
     // UI views
-    Toolbar toolbar;
-    ViewPagerAdapter mPagerAdapter;
-    TabLayout tabLayout;
-    ViewPager viewPager;
+    private Toolbar toolbar;
+    private ViewPagerAdapter mPagerAdapter;
+    private TabLayout tabLayout;
+    private ViewPager viewPager;
+
+    private IntentFilter mBroadcastFilter;
 
     // Fragments
     ArrayList<Fragment> fragments;
-
     MusicPlayerFragment mPlayerFragment;
+    YoutubeFragment mYTFragment;
 
     // SharedPreferences object to get settings from SettingsActivity
     SharedPreferences settings;
 
+    // Variable for checking if broadcast receiver is registered
     boolean mReceiverRegistered;
+
+    // List of MessageReceivers that need to know about new messages from the server
+    private ArrayList<MessageReceiver> mMessageReceivers = new ArrayList<>();
 
     private BroadcastReceiver bReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.v(App.TAG,getClass().getSimpleName()+" - MESSAGE RECEIVED: "+intent.getAction());
+            Log.v(App.TAG, MainActivity.this.getClass().getSimpleName()+" - BROADCAST RECEIVED: "+intent.getAction());
             switch(intent.getAction()) {
                 case ConnectionService.DISCONNECTED:
                     // if host disconnects then go to ConnectActivity
@@ -71,8 +86,20 @@ public class MainActivity extends AppCompatActivity {
                     finish();
                     break;
                 case ConnectionService.MESSAGERECEIVED:
-                    MMPM msg = (MMPM) intent.getSerializableExtra("MPMM");
-                    Log.v(App.TAG,"Got message: "+msg.toJson());
+                    String raw_json = intent.getStringExtra("msg");
+                    if(raw_json != null) {
+                        Log.v(App.TAG,"Got message: "+raw_json);
+                        try {
+                            JSONObject json = new JSONObject(raw_json);
+                            // notify all IRemoteMessageReceivers that a new message was received
+                            for(int i = 0; i < mMessageReceivers.size(); i++) {
+                                mMessageReceivers.get(i).onReceive(json);
+                            }
+                        } catch (JSONException e) {
+                            Log.e(App.TAG,"Corrupted json data: "+e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
                     break;
             }
         }
@@ -86,11 +113,16 @@ public class MainActivity extends AppCompatActivity {
 
         Log.i(App.TAG, getClass().getSimpleName()+" - onCreate runs");
 
+        mBroadcastFilter = new IntentFilter();
+        mBroadcastFilter.addAction(ConnectionService.DISCONNECTED);
+        mBroadcastFilter.addAction(ConnectionService.MESSAGERECEIVED);
+        mBroadcastFilter.addAction(ConnectionService.UPDATE);
+
         // Get SharedPreferences object to get settings from SettingsActivity
         settings = PreferenceManager.getDefaultSharedPreferences(this);
 
         initializeUI();
-        // Setup pagin (swiping between fragments)
+        // Setup paging (swiping between fragments)
         initializePaging();
     }
 
@@ -109,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
         if(settings.getBoolean(PreferenceKeys.DEBUG, false)) {
             RelativeLayout root = (RelativeLayout) findViewById(R.id.activity_main_container);
             ListView debugList = new ListView(this);
-            debugList.getLayoutParams().width = 50;
+            debugList.setBackgroundColor(Color.BLACK);
             RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(0,0);
             debugList.setLayoutParams(params);
             if (root != null) {
@@ -118,11 +150,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void registerMessageReceiver(MessageReceiver receiver) {
+        this.mMessageReceivers.add(receiver);
+    }
+
     private void initializePaging() {
         fragments = new ArrayList<>();
+
         mPlayerFragment = new MusicPlayerFragment();
+        registerMessageReceiver(mPlayerFragment);
+        mYTFragment = new YoutubeFragment();
+        registerMessageReceiver(mYTFragment);
+
         fragments.add(mPlayerFragment);
-        fragments.add(Fragment.instantiate(this, YoutubeFragment.class.getName()));
+        fragments.add(mYTFragment);
 
         mPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager(), fragments);
 
@@ -131,6 +172,44 @@ public class MainActivity extends AppCompatActivity {
 
         tabLayout.getTabAt(0).setIcon(R.drawable.ic_music_note_black_24dp);
         tabLayout.getTabAt(1).setIcon(R.drawable.ic_action_youtube);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch(keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                if(mBound && mBoundService != null && mBoundService.isConnected()) {
+                    // TODO: Create messages through factory!
+                    try{
+                        JSONObject obj = new JSONObject();
+                        JSONObject mplayer = new JSONObject();
+                        mplayer.put("cmd","changevol");
+                        mplayer.put("vol","up");
+                        obj.put("mplayer",mplayer);
+                        mBoundService.sendMessage(obj);
+                    } catch(JSONException e) {
+                        Log.v(App.TAG,"Could not create json message - "+e.getMessage());
+                    }
+                }
+                return true;
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                if(mBound && mBoundService != null && mBoundService.isConnected()) {
+                    // TODO: Create messages through factory!
+                    try{
+                        JSONObject obj = new JSONObject();
+                        JSONObject mplayer = new JSONObject();
+                        mplayer.put("cmd","changevol");
+                        mplayer.put("vol","down");
+                        obj.put("mplayer",mplayer);
+                        mBoundService.sendMessage(obj);
+                    } catch(JSONException e) {
+                        Log.v(App.TAG,"Could not create json message - "+e.getMessage());
+                    }
+                }
+                return true;
+            default:
+                return super.onKeyDown(keyCode, event);
+        }
     }
 
     @Override
@@ -174,14 +253,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.i(App.TAG, "onDestroy runs");
+        Log.i(App.TAG, getClass().getSimpleName()+" - onDestroy runs");
         if(mBoundService != null) {
             mBoundService.disconnect();
         }
         if(mServiceConnection != null && mBound) {
             unbindService(mServiceConnection);
+            Log.v(App.TAG,getClass().getSimpleName()+" - unbinding service");
         }
-        Log.v(App.TAG,getClass().getSimpleName()+" - unbinding service");
     }
 
     @Override
@@ -191,14 +270,16 @@ public class MainActivity extends AppCompatActivity {
         if(mBoundService == null) {
             Log.v(App.TAG,getClass().getSimpleName()+" - Binding to service");
             bindService(new Intent(this, ConnectionService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+        } else {
+            // Check if still connected, if not then open ConnectActivity
+            if(!mBoundService.isConnected()) {
+                Intent startConnectionActivity = new Intent(this,ConnectActivity.class);
+                startActivity(startConnectionActivity);
+                finish();
+            }
         }
         if(!mReceiverRegistered) {
-            // TODO: find better way to add actions to broadcast receiver
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(ConnectionService.DISCONNECTED);
-            filter.addAction(ConnectionService.MESSAGERECEIVED);
-            filter.addAction(ConnectionService.UPDATE);
-            LocalBroadcastManager.getInstance(this).registerReceiver(bReceiver,filter);
+            LocalBroadcastManager.getInstance(this).registerReceiver(bReceiver,mBroadcastFilter);
             Log.v(App.TAG,getClass().getSimpleName()+" - Broadcast listener registered");
             mReceiverRegistered = true;
         }

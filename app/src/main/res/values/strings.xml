@@ -15,4 +15,6 @@
     <string name="splash_screen_title">MMP</string>
     <string name="btn_connect_title">Connect</string>
     <string name="default_ip">192.168.1.40</string>
+    <string name="lbl_et_youtube_url">Youtube URL:</string>
+    <string name="btn_youtube_download">Download</string>
 </resources>

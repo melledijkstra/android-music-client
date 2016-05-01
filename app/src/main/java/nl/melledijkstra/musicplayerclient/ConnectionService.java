@@ -14,6 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -74,11 +75,14 @@ public class ConnectionService extends Service {
         return mSocket != null && mSocket.isConnected() && mOut != null;
     }
 
-    public void sendMessage(MMPM message) {
+    public void sendMessage(JSONObject message) {
         if (isConnected()) {
-            mOut.println(message.toJson());
+            Log.v(App.TAG,"Sending: "+message.toString());
+            mOut.println(message.toString());
+            mOut.flush();
         } else {
             Log.e(App.TAG, "Not connected, couldn't send message" + message.toString());
+            disconnect();
         }
     }
 
@@ -121,6 +125,9 @@ public class ConnectionService extends Service {
         }
     }
 
+    /**
+     * Disconnects with the server, then broadcasts a message that service disconnected with server so they can react on the event
+     */
     public void disconnect() {
         if (mSocket != null && mSocket.isConnected()) {
             Log.v(App.TAG,"Disconnecting socket!! (DISCONNECT)");
@@ -131,12 +138,12 @@ public class ConnectionService extends Service {
                 mSocket = null;
                 mOut = null;
                 mIn = null;
-                // Broadcast that the connection is disconnected to everyone who's listening
-                LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(DISCONNECTED));
             } catch (IOException e) {
                 Log.v(App.TAG, "Could not dispose mSocket, mOut or mIn - Exception: " + e.getMessage());
             }
         }
+        // Broadcast that the connection is disconnected to everyone who's listening
+        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(DISCONNECTED));
         stopSelf();
     }
 
@@ -146,13 +153,17 @@ public class ConnectionService extends Service {
             mOut.flush();
             Log.v(App.TAG,"Message '"+msg+"' send");
         } else {
-            LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(DISCONNECTED));
             Log.v(App.TAG,"not connected");
         }
     }
 
     public String getRemoteIp() {
-        return mSocket.getRemoteSocketAddress().toString().replace("/","");
+        if(isConnected())  {
+            return mSocket.getRemoteSocketAddress().toString().replace("/", "");
+        } else {
+            disconnect();
+            return null;
+        }
     }
 
     // This binder gives the service to the binding object
@@ -214,15 +225,10 @@ public class ConnectionService extends Service {
                 try {
                     while ((inputMsg = inputStream.readLine()) != null) {
                         Log.v(App.TAG, "Message received: " + inputMsg);
-                        try {
-                            MMPM msg = MMPM.processRawMessage(inputMsg);
-                            Intent i = new Intent(MESSAGERECEIVED);
-                            i.putExtra("MPMM",msg);
-                            LocalBroadcastManager.getInstance(ConnectionService.this).sendBroadcast(i);
-                        } catch (JSONException e) {
-                            Log.v(App.TAG,"Could not process message: "+e.getMessage());
-                            e.printStackTrace();
-                        }
+                        Intent i = new Intent(MESSAGERECEIVED);
+                        i.putExtra("msg",inputMsg);
+                        LocalBroadcastManager.getInstance(ConnectionService.this).sendBroadcast(i);
+                        Log.v(App.TAG,"BROADCAST send: "+i.toString());
                     }
                 } catch (IOException e) {
                     Log.v(App.TAG, "Failure when listening/reading from incoming reader in: " + currentThread().getClass().getSimpleName() + " | Exception: "+e.getMessage());

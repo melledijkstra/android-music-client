@@ -67,12 +67,21 @@ public class ConnectActivity extends AppCompatActivity {
 
     private boolean mReceiverRegistered = false;
 
+    private IntentFilter mBroadcastFilter;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connect);
 
         Log.i(App.TAG,"onCreate in ConnectActivity");
+
+        mBroadcastFilter = new IntentFilter();
+        mBroadcastFilter.addAction(ConnectionService.CONNECTED);
+        mBroadcastFilter.addAction(ConnectionService.DISCONNECTED);
+        mBroadcastFilter.addAction(ConnectionService.CONNECTFAILED);
+        mBroadcastFilter.addAction(ConnectionService.MESSAGERECEIVED);
+        mBroadcastFilter.addAction(ConnectionService.UPDATE);
 
         mSettings = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -155,14 +164,7 @@ public class ConnectActivity extends AppCompatActivity {
             Log.v(App.TAG,"Binding to service");
             bindService(new Intent(this, ConnectionService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
             if(!mReceiverRegistered) {
-                // TODO: find better way to add actions to broadcast receiver
-                IntentFilter filter = new IntentFilter();
-                filter.addAction(ConnectionService.CONNECTED);
-                filter.addAction(ConnectionService.DISCONNECTED);
-                filter.addAction(ConnectionService.CONNECTFAILED);
-                filter.addAction(ConnectionService.MESSAGERECEIVED);
-                filter.addAction(ConnectionService.UPDATE);
-                LocalBroadcastManager.getInstance(this).registerReceiver(bReceiver,filter);
+                LocalBroadcastManager.getInstance(this).registerReceiver(bReceiver,mBroadcastFilter);
                 Log.v(App.TAG,getClass().getSimpleName()+" - Broadcast listener registered");
                 mReceiverRegistered = true;
             }
@@ -172,7 +174,7 @@ public class ConnectActivity extends AppCompatActivity {
 
     private void startMainScreen() {
         Intent startMainActivity = new Intent(this, MainActivity.class);
-        startMainActivity.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+        startMainActivity.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         startActivity(startMainActivity);
         finish();
     }

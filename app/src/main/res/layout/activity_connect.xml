@@ -28,15 +28,19 @@
         android:text="@string/default_ip"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        android:inputType="text" />
+        android:inputType="text"
+        android:textSize="22dp" />
 
     <Button
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
         android:text="@string/btn_connect_title"
         android:id="@+id/button_connect"
-        android:layout_marginTop="54dp"
-        android:layout_below="@+id/edittext_ip"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:background="#4caf50"
+        android:textSize="20dp"
+        android:textColor="#e0e0e0" />
 
 </RelativeLayout>

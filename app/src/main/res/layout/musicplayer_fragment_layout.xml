@@ -8,7 +8,8 @@
         android:id="@+id/swipe_refresh_layout"
         android:layout_width="fill_parent"
         android:minHeight="10dp"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_above="@+id/linearLayout">
 
         <ListView
             android:layout_width="fill_parent"
@@ -23,12 +24,23 @@
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#212121"
+        android:background="#43a047"
         android:gravity="center"
-        android:padding="5dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
-        android:id="@+id/linearLayout">
+        android:id="@+id/linearLayout"
+        android:paddingLeft="10dp"
+        android:paddingTop="5dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tvCurrentSong"
+            android:textColor="#f5f5f5"
+            android:layout_gravity="start"
+            android:visibility="gone" />
 
         <SeekBar
             android:layout_width="match_parent"
@@ -37,7 +49,7 @@
             android:max="100"
             android:progressDrawable="@drawable/apptheme_scrubber_progress_horizontal_holo_dark"
             android:thumb="@drawable/apptheme_scrubber_control_selector_holo_dark"
-            android:progress="80"
+            android:progress="0"
             android:indeterminate="false" />
 
         <LinearLayout
@@ -47,21 +59,21 @@
             android:gravity="center">
 
             <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:id="@+id/btnPreviousSong"
                 android:src="@drawable/ic_skip_previous_black_24dp"
                 android:layout_marginEnd="20dp" />
 
             <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:id="@+id/btnPlayPause"
                 android:src="@drawable/ic_pause_black_24dp" />
 
             <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:id="@+id/btnNextSong"
                 android:src="@drawable/ic_skip_next_black_24dp"
                 android:layout_marginStart="20dp" />
