@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
         viewPager.setAdapter(mPagerAdapter);
         tabLayout.setupWithViewPager(viewPager);
 
-        tabLayout.getTabAt(0).setIcon(R.drawable.ic_music_note_black_24dp);
+        tabLayout.getTabAt(0).setIcon(R.drawable.ic_music_note_colored_24dp);
         tabLayout.getTabAt(1).setIcon(R.drawable.ic_action_youtube);
     }
 
@@ -185,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject mplayer = new JSONObject();
                         mplayer.put("cmd","changevol");
                         mplayer.put("vol","up");
+                        obj.put("cmd","mplayer");
                         obj.put("mplayer",mplayer);
                         mBoundService.sendMessage(obj);
                     } catch(JSONException e) {
@@ -200,6 +201,7 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject mplayer = new JSONObject();
                         mplayer.put("cmd","changevol");
                         mplayer.put("vol","down");
+                        obj.put("cmd","mplayer");
                         obj.put("mplayer",mplayer);
                         mBoundService.sendMessage(obj);
                     } catch(JSONException e) {

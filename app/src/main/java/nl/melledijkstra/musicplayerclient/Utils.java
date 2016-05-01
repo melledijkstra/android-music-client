@@ -46,7 +46,7 @@ public class Utils {
      * @param out_max maximum value that needs to be returned
      * @return The mapped value
      */
-    public static int Map(int val, int in_min, int in_max, int out_min, int out_max)
+    public static long Map(long val, long in_min, long in_max, long out_min, long out_max)
     {
         return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }

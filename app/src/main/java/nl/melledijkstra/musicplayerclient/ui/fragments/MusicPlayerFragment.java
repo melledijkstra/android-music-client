@@ -21,6 +21,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
@@ -37,7 +39,7 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
     SeekBar skMusicTime;
     ImageButton btnPreviousSong, btnPlayPause, btnNextSong;
     SwipeRefreshLayout refreshSwipeLayout;
-    TextView tvCurrentSong;
+    TextView tvCurrentSong, tvCurPos, tvSongDuration;
 
     // ListAdapter that dynamically fills the music list
     public ArrayAdapter<String> musicListAdapter;
@@ -62,6 +64,8 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
             btnNextSong = (ImageButton) root.findViewById(R.id.btnNextSong);
             songListView = (ListView) root.findViewById(R.id.songListView);
             tvCurrentSong = (TextView) root.findViewById(R.id.tvCurrentSong);
+            tvCurPos = (TextView) root.findViewById(R.id.tvSongCurPos);
+            tvSongDuration = (TextView) root.findViewById(R.id.tvSongDuration);
 
             // set action listeners
             refreshSwipeLayout.setOnRefreshListener(onRefreshListener);
@@ -118,10 +122,12 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
             if(fromUser) {
                 Log.v(App.TAG,"Seekbar change: "+progress);
                 try {
+                    // TODO: use message factory!
                     JSONObject obj = new JSONObject();
                     JSONObject mplayer = new JSONObject();
                     mplayer.put("cmd","changepos");
                     mplayer.put("pos",progress);
+                    obj.put("cmd","mplayer");
                     obj.put("mplayer",mplayer);
                     ((MainActivity)getActivity()).mBoundService.sendMessage(obj);
                 } catch (JSONException e) {
@@ -129,6 +135,10 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
                     e.printStackTrace();
                 }
             }
+            tvCurPos.setText(String.format(Locale.getDefault(),
+                    "%02d:%02d",
+                    TimeUnit.MILLISECONDS.toMinutes(progress) % TimeUnit.HOURS.toMinutes(1),
+                    TimeUnit.MILLISECONDS.toSeconds(progress) % TimeUnit.MINUTES.toSeconds(1)));
         }
 
         @Override
@@ -189,12 +199,12 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
                 int curPosition = obj.getInt("cur_pos");
                 Log.e(App.TAG, "Map("+curPosition+",1,"+songLength+",1,"+skMusicTime.getMax()+")");
                 if(curPosition <= 0) curPosition = 1;
-                curPosition = Utils.Map(curPosition, 1, songLength, 1, skMusicTime.getMax());
+                curPosition = ((int) Utils.Map(curPosition, 1, songLength, 1, skMusicTime.getMax()));
                 Log.e(App.TAG, "Mapped pos: "+curPosition);
                 if (curPosition > 0) {
                     skMusicTime.setProgress(curPosition);
                 } else {
-                    skMusicTime.setProgress(skMusicTime.getMax());
+                    skMusicTime.setProgress(0);
                 }
             }
 
@@ -217,7 +227,13 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
                 // Store song length when gathering songlist data for the first time
                 // That would save a lot of network communication
                 int songLength = obj.getInt("length");
-                if(songLength < 3000) skMusicTime.setMax(songLength);
+                skMusicTime.setMax(songLength);
+
+                tvSongDuration.setText(String.format(Locale.getDefault(),
+                        "%02d:%02d",
+                        TimeUnit.MILLISECONDS.toMinutes(songLength) % TimeUnit.HOURS.toMinutes(1),
+                        TimeUnit.MILLISECONDS.toSeconds(songLength) % TimeUnit.MINUTES.toSeconds(1)));
+
                 Log.v(App.TAG,"Length of song: "+songLength);
                 this.songLength = songLength;
             }

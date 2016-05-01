@@ -196,14 +196,6 @@ public class ConnectionService extends Service {
     @Override
     public void onDestroy() {
         Log.i(App.TAG, "Service - onDestroy");
-
-        NotificationCompat.Builder notification = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_notifications_black_24dp)
-                .setContentTitle("Service stopped")
-                .setContentText("It stopped :(");
-
-        notifyman.notify(1, notification.build());
-
         Toast.makeText(this, "Service - Destroyed", Toast.LENGTH_SHORT).show();
         disconnect();
         super.onDestroy();
