@@ -47,6 +47,8 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
     // TODO: remove this and store music information when retrieving the list
     int songLength;
 
+    boolean isDragging;
+
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -121,19 +123,6 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             if(fromUser) {
                 Log.v(App.TAG,"Seekbar change: "+progress);
-                try {
-                    // TODO: use message factory!
-                    JSONObject obj = new JSONObject();
-                    JSONObject mplayer = new JSONObject();
-                    mplayer.put("cmd","changepos");
-                    mplayer.put("pos",progress);
-                    obj.put("cmd","mplayer");
-                    obj.put("mplayer",mplayer);
-                    ((MainActivity)getActivity()).mBoundService.sendMessage(obj);
-                } catch (JSONException e) {
-                    Log.v(App.TAG, "Could not create changepos message");
-                    e.printStackTrace();
-                }
             }
             tvCurPos.setText(String.format(Locale.getDefault(),
                     "%02d:%02d",
@@ -142,10 +131,27 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
         }
 
         @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {}
+        public void onStartTrackingTouch(SeekBar seekBar) {
+            isDragging = true;
+        }
 
         @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {}
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            isDragging = false;
+            try {
+                // TODO: use message factory!
+                JSONObject obj = new JSONObject();
+                JSONObject mplayer = new JSONObject();
+                mplayer.put("cmd","changepos");
+                mplayer.put("pos",seekBar.getProgress());
+                obj.put("cmd","mplayer");
+                obj.put("mplayer",mplayer);
+                ((MainActivity)getActivity()).mBoundService.sendMessage(obj);
+            } catch (JSONException e) {
+                Log.v(App.TAG, "Could not create changepos message");
+                e.printStackTrace();
+            }
+        }
     };
 
     @Override
@@ -201,10 +207,12 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
                 if(curPosition <= 0) curPosition = 1;
                 curPosition = ((int) Utils.Map(curPosition, 1, songLength, 1, skMusicTime.getMax()));
                 Log.e(App.TAG, "Mapped pos: "+curPosition);
-                if (curPosition > 0) {
-                    skMusicTime.setProgress(curPosition);
-                } else {
-                    skMusicTime.setProgress(0);
+                if(!isDragging) {
+                    if (curPosition > 0) {
+                        skMusicTime.setProgress(curPosition);
+                    } else {
+                        skMusicTime.setProgress(0);
+                    }
                 }
             }
 
