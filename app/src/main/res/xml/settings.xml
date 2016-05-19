@@ -8,7 +8,6 @@
             android:title="Host IP"
             android:summary="The host ip for music player server"
             android:key="host_ip"
-            android:icon="@drawable/ic_action_wifi"
             android:defaultValue="192.168.1.40" />
 
     </PreferenceCategory>
@@ -22,7 +21,6 @@
             android:summary="Generate a list when connection is established with server?"
             android:key="list_on_connect"
             android:defaultValue="true"
-            android:icon="@drawable/ic_view_list"
             />
 
         <SwitchPreference
@@ -30,7 +28,6 @@
             android:summary="Show small listview in top-right corner with all incoming messages"
             android:key="app_debug"
             android:defaultValue="false"
-            android:icon="@drawable/debug"
             />
 
     </PreferenceCategory>
@@ -41,7 +38,6 @@
         <SwitchPreference
             android:title="Fade transition"
             android:summary="Make a fade transition when switching songs"
-            android:icon="@android:drawable/ic_menu_slideshow"
             />
 
         <SwitchPreference

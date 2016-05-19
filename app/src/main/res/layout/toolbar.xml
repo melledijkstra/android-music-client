@@ -3,6 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/colorPrimary"
-    android:elevation="4dp">
+    android:elevation="4dp"
+    >
+
+    <ImageView
+        android:id="@+id/toolbar_hamburger"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_menu"
+        android:contentDescription="Menu Action"
+        android:padding="10dp" />
 
 </android.support.v7.widget.Toolbar>

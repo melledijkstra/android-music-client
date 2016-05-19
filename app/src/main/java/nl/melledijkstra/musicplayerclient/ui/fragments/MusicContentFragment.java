@@ -1,5 +1,6 @@
 package nl.melledijkstra.musicplayerclient.ui.fragments;
 
+
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -13,25 +14,27 @@ import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.ui.MainActivity;
 
 /**
- * <p>Created by Melle Dijkstra on 17-4-2016</p>
+ * A simple {@link Fragment} subclass.
  */
-public class YoutubeFragment extends Fragment implements MessageReceiver {
+public class MusicContentFragment extends Fragment implements MessageReceiver {
 
-    public YoutubeFragment() {
+
+    public MusicContentFragment() {
+        // Required empty public constructor
         ((MainActivity)getActivity()).registerMessageReceiver(this);
     }
 
+
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if(container == null) {
-            return null;
-        }
-        return inflater.inflate(R.layout.youtube_fragment_layout, container, false);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        return inflater.inflate(R.layout.fragment_music_content, container, false);
     }
 
     @Override
     public void onReceive(JSONObject obj) {
-        // TODO: react on new json message from main activity
+
     }
 
 }

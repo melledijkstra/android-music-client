@@ -6,5 +6,5 @@ import org.json.JSONObject;
  * Created by melle on 28-4-2016.
  */
 public interface MessageReceiver {
-    void onReceive(JSONObject json);
+    void onReceive(JSONObject obj);
 }

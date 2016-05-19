@@ -17,9 +17,4 @@
         app:showAsAction="ifRoom"
         android:icon="@drawable/debug"
         /> -->
-
-    <item android:id="@+id/action_settings"
-    android:title="@string/action_settings_title"
-    android:icon="@drawable/ic_settings_black_24dp"
-    app:showAsAction="ifRoom" />
 </menu>

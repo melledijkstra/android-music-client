@@ -8,14 +8,16 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.support.design.widget.TabLayout;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.ViewPager;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -23,8 +25,8 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -36,9 +38,9 @@ import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.ConnectionService;
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
-import nl.melledijkstra.musicplayerclient.ui.fragments.MusicPlayerFragment;
-import nl.melledijkstra.musicplayerclient.ui.fragments.ViewPagerAdapter;
+import nl.melledijkstra.musicplayerclient.ui.fragments.AlbumsFragment;
+import nl.melledijkstra.musicplayerclient.ui.fragments.MusicControllerFragment;
+import nl.melledijkstra.musicplayerclient.ui.fragments.SongsFragment;
 import nl.melledijkstra.musicplayerclient.ui.fragments.YoutubeFragment;
 
 /**
@@ -54,16 +56,18 @@ public class MainActivity extends AppCompatActivity {
 
     // UI views
     private Toolbar toolbar;
-    private ViewPagerAdapter mPagerAdapter;
-    private TabLayout tabLayout;
-    private ViewPager viewPager;
+    private DrawerLayout drawer;
+    private NavigationView drawerNavigation;
+    private ImageView menuAction;
 
     private IntentFilter mBroadcastFilter;
 
     // Fragments
     ArrayList<Fragment> fragments;
-    MusicPlayerFragment mPlayerFragment;
+    MusicControllerFragment mPlayerFragment;
     YoutubeFragment mYTFragment;
+    SongsFragment mSongsFragment;
+    AlbumsFragment mAlbumsFragment;
 
     // SharedPreferences object to get settings from SettingsActivity
     SharedPreferences settings;
@@ -109,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // Default stuff
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_drawer);
 
         Log.i(App.TAG, getClass().getSimpleName()+" - onCreate runs");
 
@@ -133,12 +137,23 @@ public class MainActivity extends AppCompatActivity {
         if(getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
+        menuAction = (ImageView) toolbar.findViewById(R.id.toolbar_hamburger);
+        menuAction.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawer.openDrawer(GravityCompat.START);
+            }
+        });
 
-        // Setup tabs and viewpager
-        tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
-        viewPager = (ViewPager) findViewById(R.id.viewpager);
+        // DrawerLayout
+        drawer = (DrawerLayout) findViewById(R.id.main_drawer_layout);
+        drawerNavigation = (NavigationView) findViewById(R.id.drawer_navigation);
+        if (drawerNavigation != null) {
+            drawerNavigation.setNavigationItemSelectedListener(onNavigationItemClick);
+        }
 
-        if(settings.getBoolean(PreferenceKeys.DEBUG, false)) {
+        // TODO: This doesn't work, fix or remove!!
+        /*if(settings.getBoolean(PreferenceKeys.DEBUG, false)) {
             RelativeLayout root = (RelativeLayout) findViewById(R.id.activity_main_container);
             ListView debugList = new ListView(this);
             debugList.setBackgroundColor(Color.BLACK);
@@ -147,31 +162,46 @@ public class MainActivity extends AppCompatActivity {
             if (root != null) {
                 root.addView(debugList);
             }
-        }
+        }*/
     }
 
-    private void registerMessageReceiver(MessageReceiver receiver) {
+    NavigationView.OnNavigationItemSelectedListener onNavigationItemClick = new NavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(MenuItem item) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction ft = fragmentManager.beginTransaction();
+            switch(item.getItemId()) {
+                case R.id.drawer_mplayer:
+                    ft.replace(R.id.fragment_wrapper, mSongsFragment);
+                    break;
+                case R.id.drawer_youtube:
+                    ft.replace(R.id.fragment_wrapper, mYTFragment);
+                    break;
+                case R.id.drawer_settings:
+                    openSettingsActivity();
+                    break;
+            }
+            ft.commit();
+            drawer.closeDrawers();
+            return true;
+        }
+    };
+
+    private void openSettingsActivity() {
+        Intent i = new Intent(this, SettingsActivity.class);
+        startActivity(i);
+    }
+
+    public void registerMessageReceiver(MessageReceiver receiver) {
         this.mMessageReceivers.add(receiver);
     }
 
     private void initializePaging() {
-        fragments = new ArrayList<>();
-
-        mPlayerFragment = new MusicPlayerFragment();
-        registerMessageReceiver(mPlayerFragment);
+        mPlayerFragment = new MusicControllerFragment();
         mYTFragment = new YoutubeFragment();
-        registerMessageReceiver(mYTFragment);
+        mSongsFragment = new SongsFragment();
+        mAlbumsFragment = new AlbumsFragment();
 
-        fragments.add(mPlayerFragment);
-        fragments.add(mYTFragment);
-
-        mPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager(), fragments);
-
-        viewPager.setAdapter(mPagerAdapter);
-        tabLayout.setupWithViewPager(viewPager);
-
-        tabLayout.getTabAt(0).setIcon(R.drawable.ic_music_note_colored_24dp);
-        tabLayout.getTabAt(1).setIcon(R.drawable.ic_action_youtube);
     }
 
     @Override

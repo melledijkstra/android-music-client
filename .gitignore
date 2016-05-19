@@ -2,6 +2,9 @@
 *.apk
 *.ap_
 
+# Intellij IDEA
+.idea
+
 # Files for the Dalvik VM
 *.dex
 
@@ -30,3 +33,12 @@ proguard/
 
 # Android Studio captures folder
 captures/
+
+# Generated files
+out/
+
+# Intellij
+*.iml
+
+# Keystore files
+*.jks

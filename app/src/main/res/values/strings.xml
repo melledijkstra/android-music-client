@@ -17,4 +17,7 @@
     <string name="default_ip">192.168.1.40</string>
     <string name="lbl_et_youtube_url">Youtube URL:</string>
     <string name="btn_youtube_download">Download</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

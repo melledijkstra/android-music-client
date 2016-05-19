@@ -33,21 +33,20 @@ import nl.melledijkstra.musicplayerclient.ui.MainActivity;
 /**
  * <p>Created by Melle Dijkstra on 17-4-2016</p>
  */
-public class MusicPlayerFragment extends Fragment implements MessageReceiver {
+public class MusicControllerFragment extends Fragment implements MessageReceiver {
 
-    ListView songListView;
     SeekBar skMusicTime;
     ImageButton btnPreviousSong, btnPlayPause, btnNextSong;
-    SwipeRefreshLayout refreshSwipeLayout;
     TextView tvCurrentSong, tvCurPos, tvSongDuration;
-
-    // ListAdapter that dynamically fills the music list
-    public ArrayAdapter<String> musicListAdapter;
 
     // TODO: remove this and store music information when retrieving the list
     int songLength;
 
     boolean isDragging;
+
+    public MusicControllerFragment() {
+        ((MainActivity)getActivity()).registerMessageReceiver(this);
+    }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -57,26 +56,17 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
             View root = getView();
 
             // get views
-            refreshSwipeLayout = (SwipeRefreshLayout) root.findViewById(R.id.swipe_refresh_layout);
             skMusicTime = (SeekBar) root.findViewById(R.id.sbMusicTime);
             skMusicTime.setOnSeekBarChangeListener(onSeekbarChange);
+
             btnPreviousSong = (ImageButton) root.findViewById(R.id.btnPreviousSong);
             btnPlayPause = (ImageButton) root.findViewById(R.id.btnPlayPause);
             btnPlayPause.setOnClickListener(onPlayPauseClick);
             btnNextSong = (ImageButton) root.findViewById(R.id.btnNextSong);
-            songListView = (ListView) root.findViewById(R.id.songListView);
+
             tvCurrentSong = (TextView) root.findViewById(R.id.tvCurrentSong);
             tvCurPos = (TextView) root.findViewById(R.id.tvSongCurPos);
             tvSongDuration = (TextView) root.findViewById(R.id.tvSongDuration);
-
-            // set action listeners
-            refreshSwipeLayout.setOnRefreshListener(onRefreshListener);
-
-            musicListAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, App.theMusicPlayer.songList);
-
-            songListView.setAdapter(musicListAdapter);
-            songListView.setOnItemClickListener(onItemClick);
-
         }
     }
 
@@ -94,25 +84,6 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
             } catch (JSONException e) {
                 Log.v(App.TAG,"Could not create play/pause message - "+e.getMessage());
                 e.printStackTrace();
-            }
-        }
-    };
-
-    private AdapterView.OnItemClickListener onItemClick = new AdapterView.OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            try {
-                // TODO: Create message with Factory pattern maybe?
-                JSONObject obj = new JSONObject();
-                obj.put("cmd","mplayer");
-                JSONObject mplayer = new JSONObject();
-                mplayer.put("cmd","play");
-                mplayer.put("song_id",position);
-                obj.put("mplayer",mplayer);
-                ((MainActivity)getActivity()).mBoundService.sendMessage(obj);
-            } catch (JSONException e) {
-                Toast.makeText(getActivity(), "JSON creation error: "+e.getMessage(), Toast.LENGTH_SHORT).show();
-                Log.v(App.TAG,"JSON creation error: "+e.getMessage());
             }
         }
     };
@@ -156,46 +127,8 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if(container == null) {
-            return null;
-        }
+        Log.v(App.TAG,"container: "+container);
         return inflater.inflate(R.layout.musicplayer_fragment_layout, container, false);
-    }
-
-    /**
-     * Song ListView Refresh action that populates the ListView with songs
-     */
-    private SwipeRefreshLayout.OnRefreshListener onRefreshListener = new SwipeRefreshLayout.OnRefreshListener() {
-        @Override
-        public void onRefresh() {
-            Log.v(App.TAG,getClass().getSimpleName()+" - Sending LIST command");
-            JSONObject command = new JSONObject();
-            try {
-                command.put("cmd","LIST");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            ((MainActivity)getActivity()).mBoundService.sendMessage(command);
-            refreshSwipeLayout.setRefreshing(false);
-        }
-    };
-
-    public void updateSongList(ArrayList<String> songs) {
-        App.theMusicPlayer.songList.clear();
-        App.theMusicPlayer.songList.addAll(songs);
-        this.musicListAdapter.notifyDataSetChanged();
-    }
-
-    public void updateSongList(JSONArray songs) {
-        App.theMusicPlayer.songList.clear();
-        for(int i = 0; i < songs.length();i++) {
-            try {
-                App.theMusicPlayer.songList.add(songs.getString(i));
-            } catch (JSONException e) {
-                Log.v(App.TAG,"Could not add song to listview - Exception:" +e.getMessage());
-                e.printStackTrace();
-            }
-        }
     }
 
     @Override
@@ -214,10 +147,6 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
                         skMusicTime.setProgress(0);
                     }
                 }
-            }
-
-            if(obj.has("songlist") && obj.getJSONArray("songlist") != null) {
-                updateSongList(obj.getJSONArray("songlist"));
             }
 
             if(obj.has("cur_song")) {
@@ -254,9 +183,6 @@ public class MusicPlayerFragment extends Fragment implements MessageReceiver {
 
     @Override
     public void onDestroy() {
-        // Remove all music song from the list when fragment is destroyed
-        App.theMusicPlayer.songList.clear();
-        musicListAdapter.notifyDataSetChanged();
         super.onDestroy();
     }
 }

@@ -12,26 +12,19 @@ import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.ui.MainActivity;
 
-/**
- * <p>Created by Melle Dijkstra on 17-4-2016</p>
- */
-public class YoutubeFragment extends Fragment implements MessageReceiver {
+public class AlbumsFragment extends Fragment implements MessageReceiver {
 
-    public YoutubeFragment() {
+    public AlbumsFragment() {
         ((MainActivity)getActivity()).registerMessageReceiver(this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if(container == null) {
-            return null;
-        }
-        return inflater.inflate(R.layout.youtube_fragment_layout, container, false);
+        return inflater.inflate(R.layout.fragment_albums, container, false);
     }
 
     @Override
     public void onReceive(JSONObject obj) {
-        // TODO: react on new json message from main activity
-    }
 
+    }
 }

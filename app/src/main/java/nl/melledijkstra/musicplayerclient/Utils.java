@@ -11,7 +11,8 @@ import java.security.InvalidParameterException;
 public class Utils {
 
     public enum MessageTypes {
-        LIST,
+        ALBUMLIST,
+        SONGLIST
     }
 
     private Utils() {}
@@ -22,16 +23,23 @@ public class Utils {
      * @return JSONObject with all information needed for the requested message
      * @throws InvalidParameterException if MessageType is not known
      */
-    public static JSONObject JSONMessageFactory(MessageTypes cmd) throws InvalidParameterException {
+    public static JSONObject generateJSONMessage(MessageTypes cmd) throws InvalidParameterException {
         try {
+            JSONObject root = new JSONObject();
+            JSONObject mplayer = new JSONObject();
             switch (cmd) {
-                case LIST:
-                    JSONObject a = new JSONObject();
-                    a.put("cmd", "LIST");
-                    return a;
+                case ALBUMLIST:
+                    root.put("cmd", "MPLAYER");
+                    mplayer.put("cmd", "SONGLIST");
+                    break;
+                case SONGLIST:
+                    root.put("cmd", "MPLAYER");
+                    mplayer.put("cmd", "SONGLIST");
+                    break;
                 default:
-                    throw new InvalidParameterException("Can't create message out of "+cmd+" command");
+                    throw new InvalidParameterException("Can't create message from "+cmd+" command");
             }
+            return root;
         } catch (JSONException e) {
             return null;
         }
