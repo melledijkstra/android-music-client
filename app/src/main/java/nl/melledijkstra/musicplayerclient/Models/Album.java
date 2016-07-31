@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.entities;
+package nl.melledijkstra.musicplayerclient.Models;
 
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -1,11 +1,15 @@
-package nl.melledijkstra.musicplayerclient.ui.fragments;
+package nl.melledijkstra.musicplayerclient.UI.fragments;
 
+import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -21,7 +25,7 @@ import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.Utils;
-import nl.melledijkstra.musicplayerclient.ui.MainActivity;
+import nl.melledijkstra.musicplayerclient.UI.MainActivity;
 
 public class SongsFragment extends Fragment implements MessageReceiver {
 
@@ -31,15 +35,28 @@ public class SongsFragment extends Fragment implements MessageReceiver {
     // ListAdapter that dynamically fills the music list
     public ArrayAdapter<String> musicListAdapter;
 
-    public SongsFragment() {
-        ((MainActivity)getActivity()).registerMessageReceiver(this);
+    @Override
+    public void onAttach(Context context) {
+        Log.d(App.TAG,"Attaching");
+        if(context instanceof MainActivity) {
+            ((MainActivity)context).registerMessageReceiver(this);
+        } else { Log.d(App.TAG, getClass().getSimpleName()+" - Could not retrieve Activity"); }
+        super.onAttach(context);
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_songs, container, false);
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        musicListAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, App.theMusicPlayer.songList);
+        Log.d(App.TAG,"SongsFragment created");
+
+        musicListAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, App.musicClient.songList);
 
         if(getView() != null) {
             View root = getView();
@@ -87,16 +104,16 @@ public class SongsFragment extends Fragment implements MessageReceiver {
     };
 
     public void updateSongList(ArrayList<String> songs) {
-        App.theMusicPlayer.songList.clear();
-        App.theMusicPlayer.songList.addAll(songs);
+        App.musicClient.songList.clear();
+        App.musicClient.songList.addAll(songs);
         this.musicListAdapter.notifyDataSetChanged();
     }
 
     public void updateSongList(JSONArray songs) {
-        App.theMusicPlayer.songList.clear();
+        App.musicClient.songList.clear();
         for(int i = 0; i < songs.length();i++) {
             try {
-                App.theMusicPlayer.songList.add(songs.getString(i));
+                App.musicClient.songList.add(songs.getString(i));
             } catch (JSONException e) {
                 Log.v(App.TAG,"Could not add song to listview - Exception:" +e.getMessage());
                 e.printStackTrace();
@@ -125,7 +142,7 @@ public class SongsFragment extends Fragment implements MessageReceiver {
     @Override
     public void onDestroy() {
         // Remove all music song from the list when fragment is destroyed
-        App.theMusicPlayer.songList.clear();
+        App.musicClient.songList.clear();
         super.onDestroy();
     }
 }

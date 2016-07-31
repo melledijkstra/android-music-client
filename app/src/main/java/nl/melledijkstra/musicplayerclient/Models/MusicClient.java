@@ -1,15 +1,15 @@
-package nl.melledijkstra.musicplayerclient.entities;
+package nl.melledijkstra.musicplayerclient.Models;
 
-import android.graphics.drawable.Drawable;
-import android.support.v7.view.menu.ActionMenuItemView;
+import android.app.Application;
+import android.content.BroadcastReceiver;
 import android.util.Log;
-import android.widget.Toast;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import nl.melledijkstra.musicplayerclient.App;
-import nl.melledijkstra.musicplayerclient.ui.MainActivity;
+import nl.melledijkstra.musicplayerclient.MessageReceiver;
 
 /**
  * <p>
@@ -18,10 +18,10 @@ import nl.melledijkstra.musicplayerclient.ui.MainActivity;
  * </p>
  * <p>Created by Melle Dijkstra on 17-4-2016</p>
  */
-public class MusicPlayer {
+public class MusicClient implements MessageReceiver {
 
     // CONSTANTS
-    public static final String DEFAULT_IP = "192.168.1.40";
+    public static final String DEFAULT_IP = "192.168.1.200";
     public static final int DEFAULT_PORT = 1010;
     public static final int DEFAULT_TIMEOUT = 5000;
 
@@ -31,7 +31,11 @@ public class MusicPlayer {
     // current playing song
     Song currentSong;
 
-    public MusicPlayer() {
+    public MusicClient() {
+
+    }
+
+    public MusicClient(JSONObject state) {
 
     }
 
@@ -51,4 +55,15 @@ public class MusicPlayer {
         return currentSong;
     }
 
+    @Override
+    /**
+     * Hydrate objects with JSON from remote server
+     */
+    public void onReceive(JSONObject obj) {
+        Log.i(App.TAG, "MusicClient got JSON Object, trying to fill musicplayer now...");
+    }
+
+    public void update(JSONObject json) {
+
+    }
 }

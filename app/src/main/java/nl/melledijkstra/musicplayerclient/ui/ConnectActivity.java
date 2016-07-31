@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.ui;
+package nl.melledijkstra.musicplayerclient.UI;
 
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -25,8 +25,8 @@ import android.widget.Toast;
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.ConnectionService;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
-import nl.melledijkstra.musicplayerclient.entities.MusicPlayer;
+import nl.melledijkstra.musicplayerclient.Config.PreferenceKeys;
+import nl.melledijkstra.musicplayerclient.Models.MusicClient;
 
 /**
  * <p>Created by Melle Dijkstra on 10-4-2016</p>
@@ -96,7 +96,7 @@ public class ConnectActivity extends AppCompatActivity {
 
         mEditTextIP = (EditText) findViewById(R.id.edittext_ip);
         if(mEditTextIP != null) {
-            mEditTextIP.setText(mSettings.getString(PreferenceKeys.HOST_IP, MusicPlayer.DEFAULT_IP));
+            mEditTextIP.setText(mSettings.getString(PreferenceKeys.HOST_IP, MusicClient.DEFAULT_IP));
         }
         mBtnConnect = (Button) findViewById(R.id.button_connect);
         if (mBtnConnect != null) {
@@ -173,9 +173,8 @@ public class ConnectActivity extends AppCompatActivity {
     }
 
     private void startMainScreen() {
-        Intent startMainActivity = new Intent(this, MainActivity.class);
-        startMainActivity.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-        startActivity(startMainActivity);
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
         finish();
     }
 
@@ -214,7 +213,7 @@ public class ConnectActivity extends AppCompatActivity {
     protected void onDestroy() {
         Log.i(App.TAG,getClass().getSimpleName()+" - onDestroy");
         if(mBound) {
-            if(mBoundService != null && mBoundService.isConnected()) {
+            if(mBoundService != null) {
                 unbindService(mServiceConnection);
                 Log.v(App.TAG,getClass().getSimpleName()+" - unbinding from service");
             }

@@ -4,7 +4,7 @@
     android:id="@+id/activity_main_container"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    tools:context=".ui.MainActivity"
+    tools:context=".UI.MainActivity"
     android:orientation="vertical">
 
     <include

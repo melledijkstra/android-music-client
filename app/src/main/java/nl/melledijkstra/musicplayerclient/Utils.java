@@ -29,12 +29,12 @@ public class Utils {
             JSONObject mplayer = new JSONObject();
             switch (cmd) {
                 case ALBUMLIST:
-                    root.put("cmd", "MPLAYER");
-                    mplayer.put("cmd", "SONGLIST");
+                    root.put("cmd", "mplayer");
+                    mplayer.put("cmd", "albumlist");
+                    root.put("mplayer", mplayer);
                     break;
                 case SONGLIST:
-                    root.put("cmd", "MPLAYER");
-                    mplayer.put("cmd", "SONGLIST");
+                    root.put("cmd", "list");
                     break;
                 default:
                     throw new InvalidParameterException("Can't create message from "+cmd+" command");

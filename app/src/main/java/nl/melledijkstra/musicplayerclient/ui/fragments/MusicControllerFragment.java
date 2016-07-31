@@ -1,26 +1,20 @@
-package nl.melledijkstra.musicplayerclient.ui.fragments;
+package nl.melledijkstra.musicplayerclient.UI.fragments;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -28,7 +22,7 @@ import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.Utils;
-import nl.melledijkstra.musicplayerclient.ui.MainActivity;
+import nl.melledijkstra.musicplayerclient.UI.MainActivity;
 
 /**
  * <p>Created by Melle Dijkstra on 17-4-2016</p>
@@ -44,8 +38,12 @@ public class MusicControllerFragment extends Fragment implements MessageReceiver
 
     boolean isDragging;
 
-    public MusicControllerFragment() {
-        ((MainActivity)getActivity()).registerMessageReceiver(this);
+    @Override
+    public void onAttach(Context context) {
+        if(context instanceof MainActivity) {
+            ((MainActivity)context).registerMessageReceiver(this);
+        } else { Log.d(App.TAG, "Could not retrieve Activity"); }
+        super.onAttach(context);
     }
 
     @Override
@@ -155,7 +153,7 @@ public class MusicControllerFragment extends Fragment implements MessageReceiver
                 } else {
                     tvCurrentSong.setVisibility(View.VISIBLE);
                     int curSongIndex = obj.getInt("cur_song");
-                    String songName = App.theMusicPlayer.songList.get(curSongIndex);
+                    String songName = App.musicClient.songList.get(curSongIndex);
                     tvCurrentSong.setText(songName);
                 }
             }

@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.config;
+package nl.melledijkstra.musicplayerclient.Config;
 
 /**
  * <p>Created by Melle Dijkstra on 17-4-2016</p>

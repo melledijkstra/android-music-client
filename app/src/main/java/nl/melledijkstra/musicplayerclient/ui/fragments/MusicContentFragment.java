@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.ui.fragments;
+package nl.melledijkstra.musicplayerclient.UI.fragments;
 
 
 import android.os.Bundle;
@@ -11,7 +11,7 @@ import org.json.JSONObject;
 
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.ui.MainActivity;
+import nl.melledijkstra.musicplayerclient.UI.MainActivity;
 
 /**
  * A simple {@link Fragment} subclass.

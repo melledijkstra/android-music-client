@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="fill_parent"
-    tools:context="nl.melledijkstra.musicplayerclient.ui.fragments.SongsFragment">
+    tools:context="nl.melledijkstra.musicplayerclient.UI.fragments.SongsFragment">
 
     <TextView
         android:layout_width="wrap_content"

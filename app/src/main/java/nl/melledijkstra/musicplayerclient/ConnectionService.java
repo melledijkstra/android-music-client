@@ -8,12 +8,10 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -24,8 +22,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 
-import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
-import nl.melledijkstra.musicplayerclient.entities.MusicPlayer;
+import nl.melledijkstra.musicplayerclient.Config.PreferenceKeys;
+import nl.melledijkstra.musicplayerclient.Models.MusicClient;
 
 /**
  * <p>Created by Melle Dijkstra on 18-4-2016</p>
@@ -92,9 +90,9 @@ public class ConnectionService extends Service {
             Thread connectThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    String ip = settings.getString(PreferenceKeys.HOST_IP, MusicPlayer.DEFAULT_IP);
-                    int port = settings.getInt(PreferenceKeys.HOST_PORT, MusicPlayer.DEFAULT_PORT);
-                    int timeout = settings.getInt(PreferenceKeys.TIMEOUT, MusicPlayer.DEFAULT_TIMEOUT);
+                    String ip = settings.getString(PreferenceKeys.HOST_IP, MusicClient.DEFAULT_IP);
+                    int port = settings.getInt(PreferenceKeys.HOST_PORT, MusicClient.DEFAULT_PORT);
+                    int timeout = settings.getInt(PreferenceKeys.TIMEOUT, MusicClient.DEFAULT_TIMEOUT);
                     SocketAddress address = new InetSocketAddress(ip, port);
 
                     Log.v(App.TAG, "Connecting to " + ip + ":" + port + " with timeout: " + timeout);
@@ -169,7 +167,6 @@ public class ConnectionService extends Service {
     // This binder gives the service to the binding object
     public class LocalBinder extends Binder {
         public ConnectionService getService() {
-            Log.i(App.TAG, "Someone retrieved the service");
             return ConnectionService.this;
         }
     }

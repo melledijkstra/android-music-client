@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.ui;
+package nl.melledijkstra.musicplayerclient.UI;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -38,10 +38,10 @@ import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.ConnectionService;
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.ui.fragments.AlbumsFragment;
-import nl.melledijkstra.musicplayerclient.ui.fragments.MusicControllerFragment;
-import nl.melledijkstra.musicplayerclient.ui.fragments.SongsFragment;
-import nl.melledijkstra.musicplayerclient.ui.fragments.YoutubeFragment;
+import nl.melledijkstra.musicplayerclient.UI.fragments.AlbumsFragment;
+import nl.melledijkstra.musicplayerclient.UI.fragments.MusicControllerFragment;
+import nl.melledijkstra.musicplayerclient.UI.fragments.SongsFragment;
+import nl.melledijkstra.musicplayerclient.UI.fragments.YoutubeFragment;
 
 /**
  * Controller for the Main screen. This screen has the controls and information about the musicplayer
@@ -138,12 +138,14 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
         menuAction = (ImageView) toolbar.findViewById(R.id.toolbar_hamburger);
-        menuAction.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                drawer.openDrawer(GravityCompat.START);
-            }
-        });
+        if(menuAction != null) {
+            menuAction.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    drawer.openDrawer(GravityCompat.START);
+                }
+            });
+        }
 
         // DrawerLayout
         drawer = (DrawerLayout) findViewById(R.id.main_drawer_layout);
@@ -172,10 +174,10 @@ public class MainActivity extends AppCompatActivity {
             FragmentTransaction ft = fragmentManager.beginTransaction();
             switch(item.getItemId()) {
                 case R.id.drawer_mplayer:
-                    ft.replace(R.id.fragment_wrapper, mSongsFragment);
+                    Log.d(App.TAG,"drawer_player");
                     break;
                 case R.id.drawer_youtube:
-                    ft.replace(R.id.fragment_wrapper, mYTFragment);
+                    Log.d(App.TAG,"drawer_youtube");
                     break;
                 case R.id.drawer_settings:
                     openSettingsActivity();
@@ -201,7 +203,6 @@ public class MainActivity extends AppCompatActivity {
         mYTFragment = new YoutubeFragment();
         mSongsFragment = new SongsFragment();
         mAlbumsFragment = new AlbumsFragment();
-
     }
 
     @Override
