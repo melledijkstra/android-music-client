@@ -1,9 +1,11 @@
+*
+
 # Built application files
 *.apk
 *.ap_
 
 # Intellij IDEA
-.idea
+.idea/*
 
 # Files for the Dalvik VM
 *.dex
