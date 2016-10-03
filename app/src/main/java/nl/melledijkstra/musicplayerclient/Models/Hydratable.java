@@ -1,9 +1,9 @@
-package nl.melledijkstra.musicplayerclient.Models;
+package nl.melledijkstra.musicplayerclient.models;
 
 import org.json.JSONObject;
 
 /**
- * Created by melle on 19-5-2016.
+ * <p>Created by melle on 19-5-2016.</p>
  */
 public interface Hydratable {
 

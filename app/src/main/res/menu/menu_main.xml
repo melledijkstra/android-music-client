@@ -1,20 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:tools="http://schemas.android.com/tools"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".UI.MainActivity">
-
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_connect"
         android:title="@string/connect_action_title"
-        android:icon="@drawable/disconnected"
+        android:icon="@drawable/disconnected_white"
         app:showAsAction="always" />
-
-    <!-- TODO: Delete old toolbar item -->
-    <!-- <item
-        android:id="@+id/action_send_command"
-        android:title="@string/action_send_command_title"
-        app:showAsAction="ifRoom"
-        android:icon="@drawable/debug"
-        /> -->
 </menu>

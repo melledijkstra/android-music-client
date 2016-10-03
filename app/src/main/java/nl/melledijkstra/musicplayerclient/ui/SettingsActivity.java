@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.UI;
+package nl.melledijkstra.musicplayerclient.ui;
 
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;

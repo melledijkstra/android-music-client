@@ -1,7 +1,5 @@
-package nl.melledijkstra.musicplayerclient.Models;
+package nl.melledijkstra.musicplayerclient.models;
 
-import android.app.Application;
-import android.content.BroadcastReceiver;
 import android.util.Log;
 
 import org.json.JSONObject;

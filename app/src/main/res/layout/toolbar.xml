@@ -1,17 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorPrimary"
+    android:fitsSystemWindows="true"
+    android:background="@color/colorPrimaryDark"
     android:elevation="4dp"
-    >
-
-    <ImageView
-        android:id="@+id/toolbar_hamburger"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:src="@drawable/ic_menu"
-        android:contentDescription="Menu Action"
-        android:padding="10dp" />
-
+    app:theme="@style/ToolBarStyle">
 </android.support.v7.widget.Toolbar>

@@ -1,6 +1,5 @@
-package nl.melledijkstra.musicplayerclient.UI.fragments;
+package nl.melledijkstra.musicplayerclient.ui.fragments;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -20,12 +19,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.Utils;
-import nl.melledijkstra.musicplayerclient.UI.MainActivity;
+import nl.melledijkstra.musicplayerclient.models.Song;
+import nl.melledijkstra.musicplayerclient.ui.MainActivity;
 
 public class SongsFragment extends Fragment implements MessageReceiver {
 
@@ -35,6 +36,8 @@ public class SongsFragment extends Fragment implements MessageReceiver {
     // ListAdapter that dynamically fills the music list
     public ArrayAdapter<String> musicListAdapter;
 
+    List<String> songs;
+
     @Override
     public void onAttach(Context context) {
         Log.d(App.TAG,"Attaching");
@@ -42,6 +45,18 @@ public class SongsFragment extends Fragment implements MessageReceiver {
             ((MainActivity)context).registerMessageReceiver(this);
         } else { Log.d(App.TAG, getClass().getSimpleName()+" - Could not retrieve Activity"); }
         super.onAttach(context);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        songs = new ArrayList<>();
+
+        songs.add("Eddie Vedder - Long Nights");
+        songs.add("John Mayer - Gravity");
+        songs.add("Eddie Vedder - Guaranteed");
+        songs.add("Eddie Vedder - Long Nights");
+        songs.add("Eddie Vedder - Long Nights");
     }
 
     @Nullable
@@ -56,12 +71,12 @@ public class SongsFragment extends Fragment implements MessageReceiver {
 
         Log.d(App.TAG,"SongsFragment created");
 
-        musicListAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, App.musicClient.songList);
+        musicListAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, songs);
 
         if(getView() != null) {
             View root = getView();
 
-            refreshSwipeLayout = (SwipeRefreshLayout) root.findViewById(R.id.swipe_refresh_layout);
+            refreshSwipeLayout = (SwipeRefreshLayout) root.findViewById(R.id.song_swipe_refresh_layout);
             songListView = (ListView) root.findViewById(R.id.songListView);
 
             // set action listeners
@@ -87,6 +102,7 @@ public class SongsFragment extends Fragment implements MessageReceiver {
     private AdapterView.OnItemClickListener onItemClick = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            Toast.makeText(getActivity(), "Selected: "+ songs.get(position), Toast.LENGTH_SHORT).show();
             try {
                 // TODO: Create message with Factory pattern maybe?
                 JSONObject obj = new JSONObject();

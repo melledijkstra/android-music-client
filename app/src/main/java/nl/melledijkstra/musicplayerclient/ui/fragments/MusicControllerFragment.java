@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.UI.fragments;
+package nl.melledijkstra.musicplayerclient.ui.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -22,7 +22,7 @@ import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.Utils;
-import nl.melledijkstra.musicplayerclient.UI.MainActivity;
+import nl.melledijkstra.musicplayerclient.ui.MainActivity;
 
 /**
  * <p>Created by Melle Dijkstra on 17-4-2016</p>

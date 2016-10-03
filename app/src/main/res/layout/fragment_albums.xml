@@ -2,19 +2,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".UI.fragments.AlbumsFragment">
+    tools:context=".ui.fragments.AlbumsFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="ALBUMS"
-        android:textSize="20sp"/>
-
-    <GridView
-        android:id="@+id/gv_album_list"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/album_swipe_refresh_layout"
         android:layout_width="match_parent"
+        android:minHeight="100dp"
         android:layout_height="wrap_content">
 
-    </GridView>
+        <GridView
+            android:numColumns="auto_fit"
+            android:gravity="center"
+            android:id="@+id/gv_album_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 </RelativeLayout>

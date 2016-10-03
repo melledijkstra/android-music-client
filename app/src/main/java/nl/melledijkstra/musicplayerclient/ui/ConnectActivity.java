@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.UI;
+package nl.melledijkstra.musicplayerclient.ui;
 
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -25,8 +25,8 @@ import android.widget.Toast;
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.ConnectionService;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.Config.PreferenceKeys;
-import nl.melledijkstra.musicplayerclient.Models.MusicClient;
+import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
+import nl.melledijkstra.musicplayerclient.models.MusicClient;
 
 /**
  * <p>Created by Melle Dijkstra on 10-4-2016</p>
@@ -182,20 +182,24 @@ public class ConnectActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             if(checkBound()) {
-                final String ip = mEditTextIP.getText().toString();
-                Log.v(App.TAG,"mEditTextIP content: "+ip);
+                if(!App.DEBUG) {
+                    final String ip = mEditTextIP.getText().toString();
+                    Log.v(App.TAG,"mEditTextIP content: "+ip);
 
-                // Save the data
-                SharedPreferences.Editor editor = mSettings.edit();
-                editor.putString(PreferenceKeys.HOST_IP, ip);
-                editor.apply();
-                Log.v(App.TAG,"IP Saved to preferences");
+                    // Save the data
+                    SharedPreferences.Editor editor = mSettings.edit();
+                    editor.putString(PreferenceKeys.HOST_IP, ip);
+                    editor.apply();
+                    Log.v(App.TAG,"IP Saved to preferences");
 
-                mConnectDialog.setMessage("Connecting to "+ip+" ...");
-                mConnectDialog.setCancelable(false);
-                mConnectDialog.show();
+                    mConnectDialog.setMessage("Connecting to "+ip+" ...");
+                    mConnectDialog.setCancelable(false);
+                    mConnectDialog.show();
 
-                mBoundService.connect();
+                    mBoundService.connect();
+                } else {
+                    startActivity(new Intent(ConnectActivity.this,MainActivity.class));
+                }
             }
         }
     };

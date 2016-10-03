@@ -22,8 +22,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 
-import nl.melledijkstra.musicplayerclient.Config.PreferenceKeys;
-import nl.melledijkstra.musicplayerclient.Models.MusicClient;
+import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
+import nl.melledijkstra.musicplayerclient.models.MusicClient;
 
 /**
  * <p>Created by Melle Dijkstra on 18-4-2016</p>
@@ -74,14 +74,15 @@ public class ConnectionService extends Service {
     }
 
     public void sendMessage(JSONObject message) {
-        if (isConnected()) {
-            Log.v(App.TAG,"Sending: "+message.toString());
-            mOut.println(message.toString());
-            mOut.flush();
-        } else {
-            Log.e(App.TAG, "Not connected, couldn't send message" + message.toString());
-            disconnect();
-        }
+        if(!App.DEBUG)
+            if (isConnected()) {
+                Log.v(App.TAG,"Sending: "+message.toString());
+                mOut.println(message.toString());
+                mOut.flush();
+            } else {
+                Log.e(App.TAG, "Not connected, couldn't send message" + message.toString());
+                disconnect();
+            }
     }
 
     public void connect() {
@@ -127,17 +128,19 @@ public class ConnectionService extends Service {
      * Disconnects with the server, then broadcasts a message that service disconnected with server so they can react on the event
      */
     public void disconnect() {
-        if (mSocket != null && mSocket.isConnected()) {
-            Log.v(App.TAG,"Disconnecting socket!! (DISCONNECT)");
-            try {
-                mSocket.close();
-                mOut.close();
-                mIn.close();
-                mSocket = null;
-                mOut = null;
-                mIn = null;
-            } catch (IOException e) {
-                Log.v(App.TAG, "Could not dispose mSocket, mOut or mIn - Exception: " + e.getMessage());
+        if (!App.DEBUG) {
+            if (mSocket != null && mSocket.isConnected()) {
+                Log.v(App.TAG,"Disconnecting socket!! (DISCONNECT)");
+                try {
+                    mSocket.close();
+                    mOut.close();
+                    mIn.close();
+                    mSocket = null;
+                    mOut = null;
+                    mIn = null;
+                } catch (IOException e) {
+                    Log.v(App.TAG, "Could not dispose mSocket, mOut or mIn - Exception: " + e.getMessage());
+                }
             }
         }
         // Broadcast that the connection is disconnected to everyone who's listening
@@ -156,6 +159,7 @@ public class ConnectionService extends Service {
     }
 
     public String getRemoteIp() {
+        if(App.DEBUG) return null;
         if(isConnected())  {
             return mSocket.getRemoteSocketAddress().toString().replace("/", "");
         } else {

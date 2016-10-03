@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.UI;
+package nl.melledijkstra.musicplayerclient.ui;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -18,6 +19,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -25,7 +27,6 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -38,10 +39,10 @@ import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.ConnectionService;
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.UI.fragments.AlbumsFragment;
-import nl.melledijkstra.musicplayerclient.UI.fragments.MusicControllerFragment;
-import nl.melledijkstra.musicplayerclient.UI.fragments.SongsFragment;
-import nl.melledijkstra.musicplayerclient.UI.fragments.YoutubeFragment;
+import nl.melledijkstra.musicplayerclient.ui.fragments.AlbumsFragment;
+import nl.melledijkstra.musicplayerclient.ui.fragments.MusicControllerFragment;
+import nl.melledijkstra.musicplayerclient.ui.fragments.SongsFragment;
+import nl.melledijkstra.musicplayerclient.ui.fragments.YoutubeFragment;
 
 /**
  * Controller for the Main screen. This screen has the controls and information about the musicplayer
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     // UI views
     private Toolbar toolbar;
     private DrawerLayout drawer;
+    private ActionBarDrawerToggle toggle;
     private NavigationView drawerNavigation;
     private ImageView menuAction;
 
@@ -126,64 +128,78 @@ public class MainActivity extends AppCompatActivity {
         settings = PreferenceManager.getDefaultSharedPreferences(this);
 
         initializeUI();
-        // Setup paging (swiping between fragments)
-        initializePaging();
+        // Start off with a album view
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.music_content_container, new AlbumsFragment())
+                .commit();
     }
 
     public void initializeUI() {
         // Setup toolbar
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         if(getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
-        }
-        menuAction = (ImageView) toolbar.findViewById(R.id.toolbar_hamburger);
-        if(menuAction != null) {
-            menuAction.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    drawer.openDrawer(GravityCompat.START);
-                }
-            });
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
         }
 
         // DrawerLayout
         drawer = (DrawerLayout) findViewById(R.id.main_drawer_layout);
+        toggle = new ActionBarDrawerToggle(
+                this, drawer, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
         drawerNavigation = (NavigationView) findViewById(R.id.drawer_navigation);
         if (drawerNavigation != null) {
             drawerNavigation.setNavigationItemSelectedListener(onNavigationItemClick);
         }
+    }
 
-        // TODO: This doesn't work, fix or remove!!
-        /*if(settings.getBoolean(PreferenceKeys.DEBUG, false)) {
-            RelativeLayout root = (RelativeLayout) findViewById(R.id.activity_main_container);
-            ListView debugList = new ListView(this);
-            debugList.setBackgroundColor(Color.BLACK);
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(0,0);
-            debugList.setLayoutParams(params);
-            if (root != null) {
-                root.addView(debugList);
-            }
-        }*/
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        toggle.syncState();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     NavigationView.OnNavigationItemSelectedListener onNavigationItemClick = new NavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(MenuItem item) {
             FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction ft = fragmentManager.beginTransaction();
+            Fragment fragment = null;
             switch(item.getItemId()) {
                 case R.id.drawer_mplayer:
                     Log.d(App.TAG,"drawer_player");
+                    // TODO: change to music player fragment
+                    Toast.makeText(MainActivity.this, "music player selected", Toast.LENGTH_SHORT).show();
+                    fragment = new AlbumsFragment();
                     break;
                 case R.id.drawer_youtube:
                     Log.d(App.TAG,"drawer_youtube");
+                    // TODO: Change to youtube fragment
+                    Toast.makeText(MainActivity.this, "youtube selected", Toast.LENGTH_SHORT).show();
+                    fragment = new YoutubeFragment();
                     break;
                 case R.id.drawer_settings:
                     openSettingsActivity();
                     break;
             }
-            ft.commit();
+
+            if(fragment != null) {
+                FragmentTransaction ft = fragmentManager.beginTransaction();
+                ft.replace(R.id.music_content_container, fragment);
+                ft.commit();
+            }
             drawer.closeDrawers();
             return true;
         }
@@ -196,13 +212,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void registerMessageReceiver(MessageReceiver receiver) {
         this.mMessageReceivers.add(receiver);
-    }
-
-    private void initializePaging() {
-        mPlayerFragment = new MusicControllerFragment();
-        mYTFragment = new YoutubeFragment();
-        mSongsFragment = new SongsFragment();
-        mAlbumsFragment = new AlbumsFragment();
     }
 
     @Override
@@ -254,7 +263,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here.
+        if(toggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
         switch(item.getItemId()) {
+            case R.id.home:
+                drawer.openDrawer(GravityCompat.START);
+                return true;
             case R.id.action_connect:
                 DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
                     @Override
@@ -278,7 +294,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(openSettingsActivity);
                 break;
             default:
-                Toast.makeText(MainActivity.this, "Not implemented "+item.getTitle(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "No action for: "+item.getTitle(), Toast.LENGTH_SHORT).show();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -296,6 +312,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -305,7 +323,7 @@ public class MainActivity extends AppCompatActivity {
             bindService(new Intent(this, ConnectionService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
         } else {
             // Check if still connected, if not then open ConnectActivity
-            if(!mBoundService.isConnected()) {
+            if(!mBoundService.isConnected() && !App.DEBUG) {
                 Intent startConnectionActivity = new Intent(this,ConnectActivity.class);
                 startActivity(startConnectionActivity);
                 finish();

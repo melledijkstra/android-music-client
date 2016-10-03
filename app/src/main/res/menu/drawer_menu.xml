@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/drawer_mplayer"
@@ -10,12 +11,16 @@
         <item
             android:id="@+id/drawer_youtube"
             android:icon="@drawable/ic_action_youtube"
-            android:title="Youtube Download" />
+            android:title="Youtube" />
 
-        <item
-            android:id="@+id/drawer_settings"
-            android:icon="@drawable/ic_settings_black_24dp"
-            android:title="Settings" />
+        <item android:title="More">
+            <menu>
+                <item
+                    android:id="@+id/drawer_settings"
+                    android:icon="@drawable/ic_settings_black_24dp"
+                    android:title="Settings" />
+            </menu>
+        </item>
 
     </group>
 </menu>

@@ -23,13 +23,6 @@
             android:defaultValue="true"
             />
 
-        <SwitchPreference
-            android:title="Debug profiler"
-            android:summary="Show small listview in top-right corner with all incoming messages"
-            android:key="app_debug"
-            android:defaultValue="false"
-            />
-
     </PreferenceCategory>
 
     <PreferenceCategory

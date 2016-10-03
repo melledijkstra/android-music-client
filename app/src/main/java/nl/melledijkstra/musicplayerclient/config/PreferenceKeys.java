@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.Config;
+package nl.melledijkstra.musicplayerclient.config;
 
 /**
  * <p>Created by Melle Dijkstra on 17-4-2016</p>
@@ -18,8 +18,6 @@ public class PreferenceKeys {
     public static final String HOST_PORT = "host_port";
 
     public static final String TIMEOUT = "timeout";
-
-    public static final String DEBUG = "app_debug";
 
     public static final String LIST_ON_CONNECT = "list_on_connect";
 

@@ -3,7 +3,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#43a047"
+    android:background="@color/colorPrimaryDark"
     android:layout_alignParentBottom="true"
     android:layout_alignParentStart="true"
     android:id="@+id/linearLayout"
@@ -26,7 +26,7 @@
         android:id="@+id/sbMusicTime"
         android:max="100"
         android:progressDrawable="@drawable/apptheme_scrubber_progress_horizontal_holo_dark"
-        android:thumb="@drawable/apptheme_scrubber_control_selector_holo_dark"
+        android:thumb="@drawable/apptheme_scrubber_secondary_holo"
         android:progress="0"
         android:indeterminate="false" />
 
@@ -52,7 +52,7 @@
             android:id="@+id/tvSongDuration"
             android:layout_weight="1"
             android:textColor="#ffffff"
-            android:gravity="right" />
+            android:gravity="end" />
 
     </LinearLayout>
 
@@ -65,22 +65,28 @@
         <ImageButton
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:background="@null"
             android:id="@+id/btnPreviousSong"
-            android:src="@drawable/ic_skip_previous_black_24dp"
-            android:layout_marginEnd="20dp" />
+            android:src="@drawable/ic_skip_previous"
+            android:layout_marginEnd="20dp"
+            android:contentDescription="@string/previous_song" />
 
         <ImageButton
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:background="@null"
             android:id="@+id/btnPlayPause"
-            android:src="@drawable/ic_pause_black_24dp" />
+            android:src="@drawable/ic_pause_white_24dp"
+            android:contentDescription="@string/pause_resume_music" />
 
         <ImageButton
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:background="@null"
             android:id="@+id/btnNextSong"
-            android:src="@drawable/ic_skip_next_black_24dp"
-            android:layout_marginStart="20dp" />
+            android:src="@drawable/ic_skip_next"
+            android:layout_marginStart="20dp"
+            android:contentDescription="@string/next_song" />
     </LinearLayout>
 
 </LinearLayout>

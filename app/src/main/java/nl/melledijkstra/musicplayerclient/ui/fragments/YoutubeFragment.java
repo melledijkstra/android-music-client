@@ -1,7 +1,8 @@
-package nl.melledijkstra.musicplayerclient.UI.fragments;
+package nl.melledijkstra.musicplayerclient.ui.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,7 +14,7 @@ import org.json.JSONObject;
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.UI.MainActivity;
+import nl.melledijkstra.musicplayerclient.ui.MainActivity;
 
 /**
  * <p>Created by Melle Dijkstra on 17-4-2016</p>
@@ -26,6 +27,12 @@ public class YoutubeFragment extends Fragment implements MessageReceiver {
             ((MainActivity)context).registerMessageReceiver(this);
         } else { Log.d(App.TAG, getClass().getSimpleName()+" - Could not retrieve Activity"); }
         super.onAttach(context);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getActivity().setTitle("Youtube");
     }
 
     @Override

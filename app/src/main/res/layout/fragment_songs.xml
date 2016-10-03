@@ -2,18 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="fill_parent"
-    tools:context="nl.melledijkstra.musicplayerclient.UI.fragments.SongsFragment">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="HELLO"
-        android:textSize="20sp"/>
+    tools:context="nl.melledijkstra.musicplayerclient.ui.fragments.SongsFragment">
 
     <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_refresh_layout"
+        android:id="@+id/song_swipe_refresh_layout"
         android:layout_width="match_parent"
-        android:minHeight="100dp"
         android:layout_height="wrap_content">
 
         <ListView

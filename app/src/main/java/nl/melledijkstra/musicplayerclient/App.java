@@ -12,7 +12,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-import nl.melledijkstra.musicplayerclient.Models.MusicClient;
+import nl.melledijkstra.musicplayerclient.models.MusicClient;
 
 /**
  * <p>Created by Melle Dijkstra on 19-4-2016</p>
@@ -21,6 +21,10 @@ public class App extends Application {
 
     public static final String TAG = "musicplayerclient";
     public static MusicClient musicClient;
+    /**
+     * If app is in DEBUG mode then no connection is needed and dummy data is used
+     */
+    public static boolean DEBUG = true;
 
     private static ArrayList<MessageReceiver> listeners;
 
@@ -55,7 +59,7 @@ public class App extends Application {
 
     /**
      * Register a receiver that gets notified if the Application gets a message
-     * @param listener
+     * @param listener The listener
      */
     public void registerMessageReceiver(MessageReceiver listener) {
         listeners.add(listener);

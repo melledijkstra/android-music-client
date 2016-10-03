@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.Models;
+package nl.melledijkstra.musicplayerclient.models;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,21 +9,28 @@ import org.json.JSONObject;
  */
 public class Song implements Hydratable {
 
-    protected String name;
-    protected String remote_location;
+    private String name;
+    private String remote_location;
 
     public Song(JSONObject json) {
         this.Hydrate(json);
     }
 
+    public Song(String name) {
+        this.name = name;
+    }
+
     @Override
     public void Hydrate(JSONObject obj) {
         try {
-            this.name = obj.getString("name");
+            this.name = obj.getString("title");
             this.remote_location = obj.getString("file");
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
+    public String getName() {
+        return name;
+    }
 }

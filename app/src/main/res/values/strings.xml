@@ -20,4 +20,9 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="next_song">Next Song</string>
+    <string name="pause_resume_music">Pause/Resume Music</string>
+    <string name="previous_song">Previous Song</string>
 </resources>
