@@ -10,53 +10,39 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import nl.melledijkstra.musicplayerclient.App;
-import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.Utils;
-import nl.melledijkstra.musicplayerclient.models.Song;
+import nl.melledijkstra.musicplayerclient.melonplayer.Album;
+import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayerListener;
+import nl.melledijkstra.musicplayerclient.messaging.MessageBuilder;
 import nl.melledijkstra.musicplayerclient.ui.MainActivity;
+import nl.melledijkstra.musicplayerclient.ui.adapters.SongAdapter;
 
-public class SongsFragment extends Fragment implements MessageReceiver {
+public class SongsFragment extends Fragment implements MelonPlayerListener {
 
     SwipeRefreshLayout refreshSwipeLayout;
     ListView songListView;
+    private Album album;
 
     // ListAdapter that dynamically fills the music list
-    public ArrayAdapter<String> musicListAdapter;
-
-    List<String> songs;
+    public SongAdapter musicListAdapter;
 
     @Override
     public void onAttach(Context context) {
-        Log.d(App.TAG,"Attaching");
-        if(context instanceof MainActivity) {
-            ((MainActivity)context).registerMessageReceiver(this);
-        } else { Log.d(App.TAG, getClass().getSimpleName()+" - Could not retrieve Activity"); }
         super.onAttach(context);
+        App.melonPlayer.registerListener(this);
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        songs = new ArrayList<>();
-
-        songs.add("Eddie Vedder - Long Nights");
-        songs.add("John Mayer - Gravity");
-        songs.add("Eddie Vedder - Guaranteed");
-        songs.add("Eddie Vedder - Long Nights");
-        songs.add("Eddie Vedder - Long Nights");
+        getActivity().setTitle("Album Songs");
     }
 
     @Nullable
@@ -69,9 +55,17 @@ public class SongsFragment extends Fragment implements MessageReceiver {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Log.d(App.TAG,"SongsFragment created");
+        long albumid = getArguments().getLong("albumid", -1);
+        if(albumid != -1 && getActivity() != null) {
+            ((MainActivity)getActivity()).mBoundService.sendMessage(new MessageBuilder().songList(albumid).build());
+        }
+        album = App.melonPlayer.findAlbum(albumid);
+        if(album != null) {
+            getActivity().setTitle(album.getTitle());
+        }
 
-        musicListAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, songs);
+        Log.d(App.TAG,"SongsFragment created");
+        musicListAdapter = new SongAdapter(getActivity(), App.melonPlayer.findAlbum(albumid).getSongList());
 
         if(getView() != null) {
             View root = getView();
@@ -94,22 +88,21 @@ public class SongsFragment extends Fragment implements MessageReceiver {
         @Override
         public void onRefresh() {
             Log.v(App.TAG,getClass().getSimpleName()+" - Sending list command");
-            ((MainActivity)getActivity()).mBoundService.sendMessage(Utils.generateJSONMessage(Utils.MessageTypes.SONGLIST));
-            refreshSwipeLayout.setRefreshing(false);
+            ((MainActivity)getActivity()).mBoundService.sendMessage(new MessageBuilder().songList(album.getID()).build());
         }
     };
 
     private AdapterView.OnItemClickListener onItemClick = new AdapterView.OnItemClickListener() {
+
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            Toast.makeText(getActivity(), "Selected: "+ songs.get(position), Toast.LENGTH_SHORT).show();
             try {
                 // TODO: Create message with Factory pattern maybe?
                 JSONObject obj = new JSONObject();
                 obj.put("cmd","mplayer");
                 JSONObject mplayer = new JSONObject();
                 mplayer.put("cmd","play");
-                mplayer.put("song_id",position);
+                mplayer.put("songid",album.getSongList().get(position).getID());
                 obj.put("mplayer",mplayer);
                 ((MainActivity)getActivity()).mBoundService.sendMessage(obj);
             } catch (JSONException e) {
@@ -119,36 +112,6 @@ public class SongsFragment extends Fragment implements MessageReceiver {
         }
     };
 
-    public void updateSongList(ArrayList<String> songs) {
-        App.musicClient.songList.clear();
-        App.musicClient.songList.addAll(songs);
-        this.musicListAdapter.notifyDataSetChanged();
-    }
-
-    public void updateSongList(JSONArray songs) {
-        App.musicClient.songList.clear();
-        for(int i = 0; i < songs.length();i++) {
-            try {
-                App.musicClient.songList.add(songs.getString(i));
-            } catch (JSONException e) {
-                Log.v(App.TAG,"Could not add song to listview - Exception:" +e.getMessage());
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public void onReceive(JSONObject obj) {
-        try {
-            if(obj.has("songlist") && obj.getJSONArray("songlist") != null) {
-                updateSongList(obj.getJSONArray("songlist"));
-            }
-        } catch (JSONException e) {
-            Log.v(App.TAG, "JSONException: "+e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public void onResume() {
         musicListAdapter.notifyDataSetChanged();
@@ -156,9 +119,9 @@ public class SongsFragment extends Fragment implements MessageReceiver {
     }
 
     @Override
-    public void onDestroy() {
-        // Remove all music song from the list when fragment is destroyed
-        App.musicClient.songList.clear();
-        super.onDestroy();
+    public void melonPlayerUpdated() {
+        musicListAdapter.notifyDataSetChanged();
+        if(refreshSwipeLayout.isRefreshing())
+            refreshSwipeLayout.setRefreshing(false);
     }
 }

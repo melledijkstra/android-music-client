@@ -5,14 +5,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 
-import nl.melledijkstra.musicplayerclient.models.MusicClient;
+import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
+import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
 
 /**
  * <p>Created by Melle Dijkstra on 19-4-2016</p>
@@ -20,13 +25,12 @@ import nl.melledijkstra.musicplayerclient.models.MusicClient;
 public class App extends Application {
 
     public static final String TAG = "musicplayerclient";
-    public static MusicClient musicClient;
+    public static MelonPlayer melonPlayer;
+
     /**
      * If app is in DEBUG mode then no connection is needed and dummy data is used
      */
-    public static boolean DEBUG = true;
-
-    private static ArrayList<MessageReceiver> listeners;
+    public static boolean DEBUG = false;
 
     BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -36,44 +40,34 @@ public class App extends Application {
                 Log.v(App.TAG,"Application - got message: "+raw_json);
                 try {
                     JSONObject json = new JSONObject(raw_json);
-                    // notify all MessageReceivers that a new message was received
-                    for (MessageReceiver listener : listeners) {
-                        listener.onReceive(json);
-                    }
+                    if(json.has("mplayer")) melonPlayer.onReceive(json.getJSONObject("mplayer"));
                 } catch (JSONException e) {
-                    Log.e(App.TAG,"Corrupted json data: "+e.getMessage());
+                    Log.e(App.TAG,"Incorrect json data: "+e.getMessage());
                     e.printStackTrace();
                 }
             }
         }
     };
 
+    public App() {
+        melonPlayer = new MelonPlayer();
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
-        listeners = new ArrayList<>();
-        musicClient = new MusicClient();
-        registerMessageReceiver(musicClient);
-        registerReceiver(receiver, new IntentFilter(ConnectionService.MESSAGERECEIVED));
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        DEBUG = prefs.getBoolean(PreferenceKeys.DEBUG, false);
+        // the musicclient should be notified when message comes in. It can then update it's state
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter(ConnectionService.MESSAGERECEIVED));
     }
 
     /**
-     * Register a receiver that gets notified if the Application gets a message
-     * @param listener The listener
+     * Checks if the debug state has changed and sets the debug state for the application
      */
-    public void registerMessageReceiver(MessageReceiver listener) {
-        listeners.add(listener);
-    }
-
-    public void notifyMusicClient(String data) {
-        try {
-            JSONObject json = new JSONObject(data);
-            musicClient.update(json);
-        } catch (JSONException e) {
-            Log.d(App.TAG, "Malformed JSON: "+e.getMessage());
-            e.printStackTrace();
-        }
-
+    public void updateDebugState() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        DEBUG = prefs.getBoolean(PreferenceKeys.DEBUG, false);
     }
 
 }

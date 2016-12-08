@@ -1,63 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:paddingLeft="10dp"
-        android:paddingTop="5dp"
-        android:paddingRight="10dp"
-        android:paddingBottom="5dp"
-        android:background="#ef5350"
-        android:id="@+id/linearLayout2">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/lbl_et_youtube_url"
-            android:text="@string/lbl_et_youtube_url"
-            android:labelFor="@+id/etYoutubeUrl"
-            android:textColor="#ffffff" />
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <EditText
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/etYoutubeUrl"
-                android:inputType="textUri"
-                android:textStyle="italic"
-                android:layout_gravity="start|center_vertical"
-                android:layout_weight="1" />
-
-            <Button
-                android:id="@+id/btnYoutubeDownload"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="@string/btn_youtube_download"
-                android:layout_gravity="center_vertical|end"
-                android:background="#ff6e40"
-                android:textColor="#ffffff"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp" />
-        </LinearLayout>
-
-    </LinearLayout>
-
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/listView"
-        android:layout_centerHorizontal="true"
-        android:layout_above="@+id/linearLayout2" />
+        android:id="@+id/listView" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:elevation="5dp"
+        app:backgroundTint="@color/colorPrimaryDark"
+        app:rippleColor="@color/colorPrimary"
+        />
 
 </RelativeLayout>

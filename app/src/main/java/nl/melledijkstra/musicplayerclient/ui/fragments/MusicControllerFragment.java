@@ -40,9 +40,6 @@ public class MusicControllerFragment extends Fragment implements MessageReceiver
 
     @Override
     public void onAttach(Context context) {
-        if(context instanceof MainActivity) {
-            ((MainActivity)context).registerMessageReceiver(this);
-        } else { Log.d(App.TAG, "Could not retrieve Activity"); }
         super.onAttach(context);
     }
 
@@ -129,6 +126,8 @@ public class MusicControllerFragment extends Fragment implements MessageReceiver
         return inflater.inflate(R.layout.musicplayer_fragment_layout, container, false);
     }
 
+
+
     @Override
     public void onReceive(JSONObject obj) {
         try {
@@ -152,9 +151,9 @@ public class MusicControllerFragment extends Fragment implements MessageReceiver
                     tvCurrentSong.setVisibility(View.GONE);
                 } else {
                     tvCurrentSong.setVisibility(View.VISIBLE);
-                    int curSongIndex = obj.getInt("cur_song");
-                    String songName = App.musicClient.songList.get(curSongIndex);
-                    tvCurrentSong.setText(songName);
+//                    int curSongIndex = obj.getInt("cur_song");
+//                    String songName = App.melonPlayer.songList.get(curSongIndex);
+//                    tvCurrentSong.setText(songName);
                 }
             }
 

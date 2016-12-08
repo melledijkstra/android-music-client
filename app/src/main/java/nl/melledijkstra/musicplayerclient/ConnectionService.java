@@ -10,7 +10,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.json.JSONObject;
 
@@ -23,7 +22,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 
 import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
-import nl.melledijkstra.musicplayerclient.models.MusicClient;
+import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
 
 /**
  * <p>Created by Melle Dijkstra on 18-4-2016</p>
@@ -34,7 +33,7 @@ public class ConnectionService extends Service {
     // BROADCAST MESSAGES
     public static final String CONNECTED = "nl.melledijkstra.musicplayerclient.CONNECTED";
     public static final String DISCONNECTED = "nl.melledijkstra.musicplayerclient.DISCONNECTED";
-    public static final String MESSAGERECEIVED = "nl.melledijkstra.musicplayerclient.MRECEIVED";
+    public static final String MESSAGERECEIVED = "nl.melledijkstra.musicplayerclient.MESSAGERECEIVED";
     public static final String UPDATE = "nl.melledijkstra.musicplayerclient.UPDATE";
     public static final String CONNECTFAILED = "nl.melledijkstra.musicplayerclient.CONNECTFAILED";
 
@@ -74,15 +73,32 @@ public class ConnectionService extends Service {
     }
 
     public void sendMessage(JSONObject message) {
-        if(!App.DEBUG)
+        if(!App.DEBUG) {
             if (isConnected()) {
-                Log.v(App.TAG,"Sending: "+message.toString());
+                Log.v(App.TAG, "Sending: " + message.toString());
                 mOut.println(message.toString());
                 mOut.flush();
             } else {
                 Log.e(App.TAG, "Not connected, couldn't send message" + message.toString());
                 disconnect();
             }
+        }
+    }
+
+    /**
+     * Sends a message to the server but waits for a response.
+     * Run this in a new thread to prevent NetworkOnMainThreadException
+     * @param message The message to send to the server
+     */
+    public synchronized String sendMessageWaitResponse(JSONObject message) {
+        sendMessage(message);
+        try {
+            return listen(mIn);
+        } catch (IOException e) {
+            e.printStackTrace();
+            disconnect();
+        }
+        return null;
     }
 
     public void connect() {
@@ -91,9 +107,9 @@ public class ConnectionService extends Service {
             Thread connectThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    String ip = settings.getString(PreferenceKeys.HOST_IP, MusicClient.DEFAULT_IP);
-                    int port = settings.getInt(PreferenceKeys.HOST_PORT, MusicClient.DEFAULT_PORT);
-                    int timeout = settings.getInt(PreferenceKeys.TIMEOUT, MusicClient.DEFAULT_TIMEOUT);
+                    String ip = settings.getString(PreferenceKeys.HOST_IP, MelonPlayer.DEFAULT_IP);
+                    int port = settings.getInt(PreferenceKeys.HOST_PORT, MelonPlayer.DEFAULT_PORT);
+                    int timeout = settings.getInt(PreferenceKeys.TIMEOUT, MelonPlayer.DEFAULT_TIMEOUT);
                     SocketAddress address = new InetSocketAddress(ip, port);
 
                     Log.v(App.TAG, "Connecting to " + ip + ":" + port + " with timeout: " + timeout);
@@ -129,33 +145,21 @@ public class ConnectionService extends Service {
      */
     public void disconnect() {
         if (!App.DEBUG) {
-            if (mSocket != null && mSocket.isConnected()) {
-                Log.v(App.TAG,"Disconnecting socket!! (DISCONNECT)");
-                try {
-                    mSocket.close();
-                    mOut.close();
-                    mIn.close();
-                    mSocket = null;
-                    mOut = null;
-                    mIn = null;
-                } catch (IOException e) {
-                    Log.v(App.TAG, "Could not dispose mSocket, mOut or mIn - Exception: " + e.getMessage());
-                }
+            Log.v(App.TAG,"Disconnecting socket!! (DISCONNECT)");
+            try {
+                if(mSocket != null && mSocket.isConnected()) mSocket.close();
+                if(mOut != null) mOut.close();
+                if(mIn != null) mIn.close();
+                mSocket = null;
+                mOut = null;
+                mIn = null;
+            } catch (IOException e) {
+                Log.v(App.TAG, "Could not dispose mSocket, mOut or mIn - Exception: " + e.getMessage());
             }
         }
         // Broadcast that the connection is disconnected to everyone who's listening
         LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(DISCONNECTED));
         stopSelf();
-    }
-
-    public void sendDebugMessage(String msg) {
-        if(isConnected()) {
-            mOut.println(msg);
-            mOut.flush();
-            Log.v(App.TAG,"Message '"+msg+"' send");
-        } else {
-            Log.v(App.TAG,"not connected");
-        }
     }
 
     public String getRemoteIp() {
@@ -173,6 +177,10 @@ public class ConnectionService extends Service {
         public ConnectionService getService() {
             return ConnectionService.this;
         }
+    }
+
+    private synchronized String listen(BufferedReader inputStream) throws IOException {
+        return inputStream.readLine();
     }
 
     @Nullable
@@ -197,7 +205,6 @@ public class ConnectionService extends Service {
     @Override
     public void onDestroy() {
         Log.i(App.TAG, "Service - onDestroy");
-        Toast.makeText(this, "Service - Destroyed", Toast.LENGTH_SHORT).show();
         disconnect();
         super.onDestroy();
     }
@@ -216,19 +223,19 @@ public class ConnectionService extends Service {
             String inputMsg;
             if (inputStream != null) {
                 try {
-                    while ((inputMsg = inputStream.readLine()) != null) {
-                        Log.v(App.TAG, "Message received: " + inputMsg);
+                    // Keep listening as long as the incoming message isn't null
+                    while ((inputMsg = ConnectionService.this.listen(mIn)) != null) {
+                        Log.v(App.TAG, "Service - Message received: " + inputMsg);
                         Intent i = new Intent(MESSAGERECEIVED);
                         i.putExtra("msg",inputMsg);
                         LocalBroadcastManager.getInstance(ConnectionService.this).sendBroadcast(i);
-                        Log.v(App.TAG,"BROADCAST send: "+i.toString());
                     }
                 } catch (IOException e) {
                     Log.v(App.TAG, "Failure when listening/reading from incoming reader in: " + currentThread().getClass().getSimpleName() + " | Exception: "+e.getMessage());
                     e.printStackTrace();
                 }
             }
-            // Disconnect is this thread closes. Why should you still be connected if you can't get input anymore?
+            // Disconnect if this thread closes. Why should the app still be connected if you can't get input anymore?
             disconnect();
         }
     }

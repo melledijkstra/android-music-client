@@ -12,25 +12,6 @@
         android:layout_centerHorizontal="true"
         android:elevation="4dp" />
 
-    <ImageView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:id="@+id/imageView"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="100dp"
-        android:src="@drawable/melonicon" />
-
-    <EditText
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:id="@+id/edittext_ip"
-        android:text="@string/default_ip"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
-        android:inputType="text"
-        android:textSize="22dp" />
-
     <Button
         android:layout_width="wrap_content"
         android:layout_height="100dp"
@@ -42,5 +23,26 @@
         android:background="#4caf50"
         android:textSize="20dp"
         android:textColor="#e0e0e0" />
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:id="@+id/imageView"
+        android:layout_marginTop="76dp"
+        android:src="@drawable/melonicon"
+        android:layout_below="@+id/toolbar"
+        android:layout_centerHorizontal="true" />
+
+    <EditText
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/edittext_ip"
+        android:text="@string/default_ip"
+        android:inputType="text"
+        android:textSize="22dp"
+        android:hint="MusicPlayer IP"
+        android:layout_below="@+id/imageView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="84dp" />
 
 </RelativeLayout>

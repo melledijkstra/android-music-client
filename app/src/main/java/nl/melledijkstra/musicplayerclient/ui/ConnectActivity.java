@@ -26,7 +26,7 @@ import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.ConnectionService;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
-import nl.melledijkstra.musicplayerclient.models.MusicClient;
+import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
 
 /**
  * <p>Created by Melle Dijkstra on 10-4-2016</p>
@@ -96,7 +96,7 @@ public class ConnectActivity extends AppCompatActivity {
 
         mEditTextIP = (EditText) findViewById(R.id.edittext_ip);
         if(mEditTextIP != null) {
-            mEditTextIP.setText(mSettings.getString(PreferenceKeys.HOST_IP, MusicClient.DEFAULT_IP));
+            mEditTextIP.setText(mSettings.getString(PreferenceKeys.HOST_IP, MelonPlayer.DEFAULT_IP));
         }
         mBtnConnect = (Button) findViewById(R.id.button_connect);
         if (mBtnConnect != null) {
@@ -121,11 +121,6 @@ public class ConnectActivity extends AppCompatActivity {
                 startActivity(startSettings);
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
     }
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -176,6 +171,7 @@ public class ConnectActivity extends AppCompatActivity {
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
         finish();
+        overridePendingTransition(R.anim.slidein, R.anim.slideout);
     }
 
     private View.OnClickListener onConnectBtnClick = new View.OnClickListener() {
