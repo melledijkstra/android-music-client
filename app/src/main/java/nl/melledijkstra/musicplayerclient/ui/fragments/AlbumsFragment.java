@@ -1,6 +1,5 @@
 package nl.melledijkstra.musicplayerclient.ui.fragments;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -37,19 +36,35 @@ public class AlbumsFragment extends Fragment implements
 
     @Override
     public void onAttach(Context context) {
+        Log.d(TAG, "onActivityCreated: "+((MainActivity)getActivity()).mBoundService);
+        Log.d(TAG, "onActivityCreated context: "+((MainActivity)context).mBoundService);
         super.onAttach(context);
+    }
+
+    @Override
+    public void onStart() {
+        Log.d(TAG, "onStart: "+((MainActivity)getActivity()).mBoundService);
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume: "+((MainActivity)getActivity()).mBoundService);
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG,"onCreate");
+        Log.d(TAG, "onCreate: "+((MainActivity)getActivity()).mBoundService);
         App.melonPlayer.registerListener(this);
         albumAdapter = new AlbumAdapter(getActivity(), App.melonPlayer.albums);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView: "+((MainActivity)getActivity()).mBoundService);
         getActivity().setTitle("Albums");
         return inflater.inflate(R.layout.fragment_albums, container, false);
     }
@@ -57,6 +72,7 @@ public class AlbumsFragment extends Fragment implements
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Log.d(TAG, "onActivityCreated: "+((MainActivity)getActivity()).mBoundService);
         Log.v(App.TAG,"Fragment created");
 
         if(App.DEBUG) {
@@ -90,6 +106,7 @@ public class AlbumsFragment extends Fragment implements
 
     @Override
     public void onRefresh() {
+        Log.d(TAG, "onRefresh: "+((MainActivity)getActivity()).mBoundService);
         ((MainActivity)getActivity()).mBoundService.sendMessage(new MessageBuilder()
                 .albumList()
                 .build());
@@ -110,5 +127,9 @@ public class AlbumsFragment extends Fragment implements
             swipeLayout.setRefreshing(false);
 
         albumAdapter.notifyDataSetChanged();
+    }
+
+    public void serviceConnected() {
+        Log.d(TAG, "serviceConnected: "+((MainActivity)getActivity()).mBoundService);
     }
 }

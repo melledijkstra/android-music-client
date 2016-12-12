@@ -48,15 +48,11 @@ public class ConnectionService extends Service {
 
     private final IBinder mBinder = new LocalBinder();
 
-    NotificationManager notifyman;
-
     @Override
     public void onCreate() {
         Log.v(App.TAG, "Service - onCreate");
 
         settings = PreferenceManager.getDefaultSharedPreferences(this);
-
-        notifyman = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         super.onCreate();
     }
