@@ -1,6 +1,5 @@
 package nl.melledijkstra.musicplayerclient.ui;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,7 +15,6 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -27,18 +25,14 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
-import android.widget.Toast;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.ConnectionService;
-import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
+import nl.melledijkstra.musicplayerclient.melonplayer.Album;
+import nl.melledijkstra.musicplayerclient.messaging.MessageBuilder;
 import nl.melledijkstra.musicplayerclient.ui.fragments.AlbumsFragment;
 import nl.melledijkstra.musicplayerclient.ui.fragments.MusicControllerFragment;
 import nl.melledijkstra.musicplayerclient.ui.fragments.SongsFragment;
@@ -60,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout drawer;
     private ActionBarDrawerToggle toggle;
     private NavigationView drawerNavigation;
-    private ImageView menuAction;
 
     private IntentFilter mBroadcastFilter;
 
@@ -74,48 +67,10 @@ public class MainActivity extends AppCompatActivity {
     // SharedPreferences object to get settings from SettingsActivity
     SharedPreferences settings;
 
-    // Variable for checking if broadcast receiver is registered
-    boolean mReceiverRegistered;
-
-    // List of MessageReceivers that need to know about new messages from the server
-    private ArrayList<MessageReceiver> mMessageReceivers = new ArrayList<>();
-
-    private BroadcastReceiver bReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.v(App.TAG, MainActivity.this.getClass().getSimpleName()+" - BROADCAST RECEIVED: "+intent.getAction());
-            switch(intent.getAction()) {
-                case ConnectionService.DISCONNECTED:
-                    // if host disconnects then go to ConnectActivity
-                    Intent startConnectActivity = new Intent(MainActivity.this,ConnectActivity.class);
-                    startActivity(startConnectActivity);
-                    finish();
-                    break;
-                case ConnectionService.MESSAGERECEIVED:
-                    String raw_json = intent.getStringExtra("msg");
-                    if(raw_json != null) {
-                        Log.v(App.TAG,"Got message: "+raw_json);
-                        try {
-                            JSONObject json = new JSONObject(raw_json);
-                            // notify all IRemoteMessageReceivers that a new message was received
-                            for(int i = 0; i < mMessageReceivers.size(); i++) {
-                                mMessageReceivers.get(i).onReceive(json);
-                            }
-                        } catch (JSONException e) {
-                            Log.e(App.TAG,"Corrupted json data: "+e.getMessage());
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-            }
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Default stuff
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main_drawer);
+        setContentView(R.layout.activity_main);
 
         Log.i(App.TAG, getClass().getSimpleName()+" - onCreate runs");
 
@@ -165,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        // Make sure to close drawer first before returning to previous activities
         if(drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -179,15 +135,9 @@ public class MainActivity extends AppCompatActivity {
             Fragment fragment = null;
             switch(item.getItemId()) {
                 case R.id.drawer_mplayer:
-                    Log.d(App.TAG,"drawer_player");
-                    // TODO: change to music player fragment
-                    Toast.makeText(MainActivity.this, "music player selected", Toast.LENGTH_SHORT).show();
                     fragment = new AlbumsFragment();
                     break;
                 case R.id.drawer_youtube:
-                    Log.d(App.TAG,"drawer_youtube");
-                    // TODO: Change to youtube fragment
-                    Toast.makeText(MainActivity.this, "youtube selected", Toast.LENGTH_SHORT).show();
                     fragment = new YoutubeFragment();
                     break;
                 case R.id.drawer_settings:
@@ -210,43 +160,17 @@ public class MainActivity extends AppCompatActivity {
         startActivity(i);
     }
 
-    public void registerMessageReceiver(MessageReceiver receiver) {
-        this.mMessageReceivers.add(receiver);
-    }
-
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch(keyCode) {
             case KeyEvent.KEYCODE_VOLUME_UP:
                 if(mBound && mBoundService != null && mBoundService.isConnected()) {
-                    // TODO: Create messages through factory!
-                    try{
-                        JSONObject obj = new JSONObject();
-                        JSONObject mplayer = new JSONObject();
-                        mplayer.put("cmd","changevol");
-                        mplayer.put("vol","up");
-                        obj.put("cmd","mplayer");
-                        obj.put("mplayer",mplayer);
-                        mBoundService.sendMessage(obj);
-                    } catch(JSONException e) {
-                        Log.v(App.TAG,"Could not create json message - "+e.getMessage());
-                    }
+                    mBoundService.sendMessage(new MessageBuilder().volumeUp().build());
                 }
                 return true;
             case KeyEvent.KEYCODE_VOLUME_DOWN:
                 if(mBound && mBoundService != null && mBoundService.isConnected()) {
-                    // TODO: Create messages through factory!
-                    try{
-                        JSONObject obj = new JSONObject();
-                        JSONObject mplayer = new JSONObject();
-                        mplayer.put("cmd","changevol");
-                        mplayer.put("vol","down");
-                        obj.put("cmd","mplayer");
-                        obj.put("mplayer",mplayer);
-                        mBoundService.sendMessage(obj);
-                    } catch(JSONException e) {
-                        Log.v(App.TAG,"Could not create json message - "+e.getMessage());
-                    }
+                    mBoundService.sendMessage(new MessageBuilder().volumeDown().build());
                 }
                 return true;
             default:
@@ -294,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(openSettingsActivity);
                 break;
             default:
-                Toast.makeText(this, "No action for: "+item.getTitle(), Toast.LENGTH_SHORT).show();
+                Log.d(App.TAG, "No action for: "+item.getTitle());
         }
         return super.onOptionsItemSelected(item);
     }
@@ -327,23 +251,9 @@ public class MainActivity extends AppCompatActivity {
                 Intent startConnectionActivity = new Intent(this,ConnectActivity.class);
                 startActivity(startConnectionActivity);
                 finish();
+            } else {
+                mBoundService.sendMessage(new MessageBuilder().status().build());
             }
-        }
-        if(!mReceiverRegistered) {
-            LocalBroadcastManager.getInstance(this).registerReceiver(bReceiver,mBroadcastFilter);
-            Log.v(App.TAG,getClass().getSimpleName()+" - Broadcast listener registered");
-            mReceiverRegistered = true;
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.v(App.TAG,getClass().getSimpleName() + " - onPause");
-        if(mReceiverRegistered && bReceiver != null) {
-            LocalBroadcastManager.getInstance(this).unregisterReceiver(bReceiver);
-            mReceiverRegistered = false;
-            Log.v(App.TAG,getClass().getSimpleName()+" - Broadcast listener unregistered");
         }
     }
 
@@ -360,4 +270,18 @@ public class MainActivity extends AppCompatActivity {
             mBound = false;
         }
     };
+
+    public void showSongsFragment(Album album) {
+        SongsFragment songsFragment = new SongsFragment();
+        Bundle bundle = new Bundle();
+        bundle.putLong("albumid",album.getID());
+        Log.v(App.TAG,"Show songs of album: "+album.getTitle()+" ("+album.getID()+")");
+        songsFragment.setArguments(bundle);
+        getSupportFragmentManager()
+            .beginTransaction()
+            .addToBackStack(null)
+            .replace(R.id.music_content_container, songsFragment)
+            .commit();
+    }
+
 }

@@ -1,4 +1,4 @@
-package nl.melledijkstra.musicplayerclient.models;
+package nl.melledijkstra.musicplayerclient.melonplayer;
 
 import org.json.JSONObject;
 

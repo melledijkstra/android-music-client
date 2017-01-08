@@ -23,9 +23,6 @@ public class YoutubeFragment extends Fragment implements MessageReceiver {
 
     @Override
     public void onAttach(Context context) {
-        if(context instanceof MainActivity) {
-            ((MainActivity)context).registerMessageReceiver(this);
-        } else { Log.d(App.TAG, getClass().getSimpleName()+" - Could not retrieve Activity"); }
         super.onAttach(context);
     }
 

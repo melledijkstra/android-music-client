@@ -11,66 +11,87 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.Toast;
 
-import org.json.JSONObject;
+import java.util.Collections;
 
 import nl.melledijkstra.musicplayerclient.App;
-import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.models.Album;
-import nl.melledijkstra.musicplayerclient.ui.AlbumAdapter;
+import nl.melledijkstra.musicplayerclient.melonplayer.Album;
+import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayerListener;
+import nl.melledijkstra.musicplayerclient.messaging.MessageBuilder;
 import nl.melledijkstra.musicplayerclient.ui.MainActivity;
+import nl.melledijkstra.musicplayerclient.ui.adapters.AlbumAdapter;
 
-public class AlbumsFragment extends Fragment implements MessageReceiver, SwipeRefreshLayout.OnRefreshListener, AdapterView.OnItemClickListener {
+public class AlbumsFragment extends Fragment implements
+        SwipeRefreshLayout.OnRefreshListener,
+        AdapterView.OnItemClickListener,
+        MelonPlayerListener {
 
     public static String TAG = "AlbumsFragment";
 
     GridView albumGridView;
     SwipeRefreshLayout swipeLayout;
 
-    AlbumAdapter adapter;
-    Album[] albums;
+    AlbumAdapter albumAdapter;
 
     @Override
     public void onAttach(Context context) {
-        if(context instanceof MainActivity) {
-            ((MainActivity)context).registerMessageReceiver(this);
-        } else { Log.d(App.TAG, getClass().getSimpleName()+" - Could not retrieve Activity"); }
+        Log.d(TAG, "onActivityCreated: "+((MainActivity)getActivity()).mBoundService);
+        Log.d(TAG, "onActivityCreated context: "+((MainActivity)context).mBoundService);
         super.onAttach(context);
+    }
+
+    @Override
+    public void onStart() {
+        Log.d(TAG, "onStart: "+((MainActivity)getActivity()).mBoundService);
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume: "+((MainActivity)getActivity()).mBoundService);
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG,"onCreate");
-        getActivity().setTitle("Albums");
-        albums = new Album[] {
-                new Album("Chill"),
-                new Album("House"),
-                new Album("Classic"),
-                new Album("Future House"),
-                new Album("Test"),
-                new Album("Another Album")
-        };
-        adapter = new AlbumAdapter(getActivity(), albums);
+        Log.d(TAG, "onCreate: "+((MainActivity)getActivity()).mBoundService);
+        App.melonPlayer.registerListener(this);
+        albumAdapter = new AlbumAdapter(getActivity(), App.melonPlayer.albums);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView: "+((MainActivity)getActivity()).mBoundService);
+        getActivity().setTitle("Albums");
         return inflater.inflate(R.layout.fragment_albums, container, false);
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Log.d(TAG, "onActivityCreated: "+((MainActivity)getActivity()).mBoundService);
         Log.v(App.TAG,"Fragment created");
+
+        if(App.DEBUG) {
+            App.melonPlayer.albums.clear();
+            Collections.addAll(App.melonPlayer.albums,
+                new Album("Chill", true),
+                new Album("House", false),
+                new Album("Classic", true),
+                new Album("Future House", false),
+                new Album("Test", false),
+                new Album("Another Album", false));
+        }
+
         if(getView() != null) {
             View root = getView();
 
             // get views
             albumGridView = (GridView) root.findViewById(R.id.gv_album_list);
-            albumGridView.setAdapter(adapter);
+            albumGridView.setAdapter(albumAdapter);
             albumGridView.setOnItemClickListener(this);
 
             swipeLayout = (SwipeRefreshLayout) root.findViewById(R.id.album_swipe_refresh_layout);
@@ -84,26 +105,31 @@ public class AlbumsFragment extends Fragment implements MessageReceiver, SwipeRe
     }
 
     @Override
-    public void onReceive(JSONObject obj) {
-
-    }
-
-    @Override
     public void onRefresh() {
-
+        Log.d(TAG, "onRefresh: "+((MainActivity)getActivity()).mBoundService);
+        ((MainActivity)getActivity()).mBoundService.sendMessage(new MessageBuilder()
+                .albumList()
+                .build());
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Album album = (position <= albums.length) ? albums[position] : null;
+        Album album = (position <= App.melonPlayer.albums.size()) ? App.melonPlayer.albums.get(position) : null;
         if(album != null) {
-            SongsFragment songsFragment = new SongsFragment();
-            getActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .addToBackStack(null)
-                    .replace(R.id.music_content_container, songsFragment)
-                    .commit();
-            Toast.makeText(getActivity(), "Clicked "+album.getTitle(), Toast.LENGTH_SHORT).show();
+            ((MainActivity)getActivity()).showSongsFragment(album);
         }
+    }
+
+    @Override
+    public void melonPlayerUpdated() {
+        Log.v(TAG, "Update Data");
+        if(swipeLayout.isRefreshing())
+            swipeLayout.setRefreshing(false);
+
+        albumAdapter.notifyDataSetChanged();
+    }
+
+    public void serviceConnected() {
+        Log.d(TAG, "serviceConnected: "+((MainActivity)getActivity()).mBoundService);
     }
 }

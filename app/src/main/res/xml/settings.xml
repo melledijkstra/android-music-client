@@ -2,6 +2,17 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
+        android:title="General">
+
+        <SwitchPreference
+            android:title="Debug Mode"
+            android:summary="Test the app without a connection in debug mode"
+            android:key="debug"
+            android:defaultValue="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="Connection">
 
         <EditTextPreference
