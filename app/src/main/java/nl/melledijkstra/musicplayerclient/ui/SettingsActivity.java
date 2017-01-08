@@ -15,6 +15,8 @@ import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
 
 public class SettingsActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
+    private static final String TAG = SettingsActivity.class.getSimpleName();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +34,7 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Log.d(App.TAG, "preference changed: "+key);
+        Log.d(TAG, "preference changed: "+key);
         switch(key) {
             case PreferenceKeys.DEBUG:
                 ((App)getApplication()).updateDebugState();

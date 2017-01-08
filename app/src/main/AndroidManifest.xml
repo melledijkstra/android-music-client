@@ -4,8 +4,11 @@
 
     <!-- Ask for INTERNET permission so that we can connect to python socket server -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Needed to check if user gets a call, if so then turn down the volume of the musicplayer -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
-    <application android:name=".App"
+    <application
+        android:name=".App"
         android:allowBackup="true"
         android:fullBackupContent="true"
         android:icon="@mipmap/app_logo"
@@ -13,9 +16,11 @@
         android:theme="@style/AppTheme">
 
         <!-- Connect Activity when app starts -->
-        <activity android:name=".ui.ConnectActivity"
+        <activity
+            android:name=".ui.ConnectActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
+            android:launchMode="singleInstance"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,8 +30,8 @@
         </activity>
         <activity
             android:name=".ui.MainActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar">
 
             <!--
             SplashActivity is the Launch activity now
@@ -37,10 +42,12 @@
             </intent-filter>
             -->
         </activity>
-        <activity android:name=".ui.SettingsActivity"
+        <activity
+            android:name=".ui.SettingsActivity"
             android:label="@string/settings_activity_title"
             android:theme="@style/AppTheme.WithActionBar" />
-        <service android:name=".ConnectionService" />
+
+        <service android:name=".MelonPlayerService" />
 
     </application>
 

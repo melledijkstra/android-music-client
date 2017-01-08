@@ -1,5 +1,7 @@
 package nl.melledijkstra.musicplayerclient;
 
+import java.util.Locale;
+
 /**
  * <p>Created by melle on 28-4-2016.</p>
  */
@@ -19,6 +21,40 @@ public class Utils {
     public static long Map(long val, long in_min, long in_max, long out_min, long out_max)
     {
         return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
+
+    /**
+     * Constrain a value to min and max
+     * @param value The value to constrain
+     * @param min The minimum value of the result
+     * @param max The maximum value of the result
+     * @return the constrained value
+     */
+    public static int Constrain(int value, int min, int max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    /**
+     * Check if a value is in in specific range
+     * @param value
+     * @param min
+     * @param max
+     * @return
+     */
+    public static boolean inRange(int value, int min, int max) {
+        return (value>= min) && (value<= max);
+    }
+
+    public static String millisecondsToDurationFormat(long millis) {
+        long second = (millis / 1000) % 60;
+        long minute = (millis / (1000 * 60)) % 60;
+        long hour = (millis / (1000 * 60 * 60)) % 24;
+
+        return String.format(Locale.getDefault(),"%02d:%02d:%02d", hour, minute, second);
+    }
+
+    public static int milliSecondsToSeconds(long millis) {
+        return (int) (millis / 1000);
     }
 
 }

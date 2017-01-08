@@ -25,4 +25,7 @@
     <string name="next_song">Next Song</string>
     <string name="pause_resume_music">Pause/Resume Music</string>
     <string name="previous_song">Previous Song</string>
+    <string name="title_activity_remove_this">RemoveThisActivity</string>
+    <string name="volume">Volume</string>
+    <string name="queue">Queue</string>
 </resources>

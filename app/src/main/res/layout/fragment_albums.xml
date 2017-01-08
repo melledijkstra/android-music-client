@@ -7,17 +7,19 @@
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/album_swipe_refresh_layout"
         android:layout_width="match_parent"
-        android:minHeight="100dp"
         android:layout_height="wrap_content">
 
         <GridView
-            android:numColumns="auto_fit"
-            android:gravity="center"
-            android:id="@+id/gv_album_list"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:numColumns="auto_fit"
+            tools:listitem="@layout/album_item"
+            android:id="@+id/gv_album_list"
+            />
 
         <TextView
+            android:text="NO ALBUMS"
+            android:gravity="center"
             android:id="@android:id/empty"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

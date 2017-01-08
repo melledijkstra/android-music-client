@@ -48,7 +48,7 @@ public class AlbumAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         // TODO: This method needs improvement
         View item;
-        Album album = (position <= albums.size()) ? albums.get(position) : null;
+        final Album album = (position <= albums.size()) ? albums.get(position) : null;
         if(convertView == null) {
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             item = inflater.inflate(R.layout.album_item, null);
@@ -60,6 +60,19 @@ public class AlbumAdapter extends BaseAdapter {
         TextView textView = (TextView) item.findViewById(R.id.album_title);
         // Album cover
         ImageView imageView = (ImageView) item.findViewById(R.id.album_cover);
+        // Favorite btn
+//        final ImageView favoriteImage = (ImageView) item.findViewById(R.id.favoriteImageView);
+//        favoriteImage.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                // TODO: Make album actually favorite
+//                if(true) { //album != null && album.isFavorite()) {
+//                    favoriteImage.setImageResource(R.drawable.ic_action_star_10);
+//                } else {
+//                    favoriteImage.setImageResource(R.drawable.ic_action_star_0);
+//                }
+//            }
+//        });
         textView.setText(album != null ? album.getTitle() : null);
         Bitmap cover = null;
         if (album != null) {

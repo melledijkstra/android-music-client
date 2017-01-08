@@ -23,7 +23,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import nl.melledijkstra.musicplayerclient.App;
-import nl.melledijkstra.musicplayerclient.ConnectionService;
+import nl.melledijkstra.musicplayerclient.MelonPlayerService;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
 import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
@@ -33,6 +33,7 @@ import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
  */
 public class ConnectActivity extends AppCompatActivity {
 
+    private static final String TAG = ConnectActivity.class.getSimpleName();
     SharedPreferences mSettings;
 
     EditText mEditTextIP;
@@ -40,22 +41,22 @@ public class ConnectActivity extends AppCompatActivity {
 
     ProgressDialog mConnectDialog;
 
-    ConnectionService mBoundService;
-    boolean mBound = false;
+    MelonPlayerService mBoundService;
+    boolean isBound = false;
 
     private BroadcastReceiver bReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.v(App.TAG, getClass().getSimpleName()+" - MESSAGE RECEIVED: "+intent.getAction());
+            Log.v(TAG, getClass().getSimpleName()+" - MESSAGE RECEIVED: "+intent.getAction());
 
             switch(intent.getAction()) {
-                case ConnectionService.CONNECTED:
+                case MelonPlayerService.CONNECTED:
                     // If service says it's connected then open MainActivity
                     if(mConnectDialog.isShowing()) {
                         mConnectDialog.dismiss();
                     }
                     startMainScreen();
-                case ConnectionService.CONNECTFAILED:
+                case MelonPlayerService.CONNECTFAILED:
                     if(mConnectDialog.isShowing()) {
                         mConnectDialog.dismiss();
                         String reason = (intent.getStringExtra("exception") != null) ? ": "+intent.getStringExtra("exception") : "";
@@ -74,18 +75,16 @@ public class ConnectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connect);
 
-        Log.i(App.TAG,"onCreate in ConnectActivity");
+        Log.i(TAG,"onCreate in ConnectActivity");
 
         mBroadcastFilter = new IntentFilter();
-        mBroadcastFilter.addAction(ConnectionService.CONNECTED);
-        mBroadcastFilter.addAction(ConnectionService.DISCONNECTED);
-        mBroadcastFilter.addAction(ConnectionService.CONNECTFAILED);
-        mBroadcastFilter.addAction(ConnectionService.MESSAGERECEIVED);
-        mBroadcastFilter.addAction(ConnectionService.UPDATE);
+        mBroadcastFilter.addAction(MelonPlayerService.CONNECTED);
+        mBroadcastFilter.addAction(MelonPlayerService.DISCONNECTED);
+        mBroadcastFilter.addAction(MelonPlayerService.CONNECTFAILED);
+        mBroadcastFilter.addAction(MelonPlayerService.MESSAGERECEIVED);
+        mBroadcastFilter.addAction(MelonPlayerService.UPDATE);
 
         mSettings = PreferenceManager.getDefaultSharedPreferences(this);
-
-        startService(new Intent(this, ConnectionService.class));
 
         initializeUI();
 
@@ -126,44 +125,47 @@ public class ConnectActivity extends AppCompatActivity {
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
-            ConnectionService.LocalBinder myBinder = (ConnectionService.LocalBinder) binder;
+            MelonPlayerService.LocalBinder myBinder = (MelonPlayerService.LocalBinder) binder;
             mBoundService = myBinder.getService();
-            mBound = true;
+            isBound = true;
+            if(mBoundService.isConnected()) {
+                startMainScreen();
+            }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            mBound = false;
+            isBound = false;
         }
     };
 
     @Override
     protected void onPause() {
-        Log.i(App.TAG,"onPause in ConnectActivity");
+        Log.i(TAG,"onPause in ConnectActivity");
         super.onPause();
         if(mReceiverRegistered && bReceiver != null) {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(bReceiver);
             mReceiverRegistered = false;
-            Log.v(App.TAG,getClass().getSimpleName()+" - Broadcast listener unregistered");
+            Log.v(TAG,getClass().getSimpleName()+" - Broadcast listener unregistered");
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(App.TAG,getClass().getSimpleName()+" - onResume");
+        Log.i(TAG,getClass().getSimpleName()+" - onResume");
         if (mBoundService != null && mBoundService.isConnected()) {
-            Log.v(App.TAG, "Already connected, opening main activity");
+            Log.v(TAG, "Already connected, opening main activity");
             startMainScreen();
         } else {
-            Log.v(App.TAG,"Binding to service");
-            bindService(new Intent(this, ConnectionService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+            Log.v(TAG,"Binding to service");
+            bindService(new Intent(this, MelonPlayerService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
             if(!mReceiverRegistered) {
                 LocalBroadcastManager.getInstance(this).registerReceiver(bReceiver,mBroadcastFilter);
-                Log.v(App.TAG,getClass().getSimpleName()+" - Broadcast listener registered");
+                Log.v(TAG,getClass().getSimpleName()+" - Broadcast listener registered");
                 mReceiverRegistered = true;
             }
-            Log.v(App.TAG, "Not connected, staying in connect activity");
+            Log.v(TAG, "Not connected, staying in connect activity");
         }
     }
 
@@ -179,52 +181,50 @@ public class ConnectActivity extends AppCompatActivity {
         public void onClick(View v) {
             if(checkBound()) {
                 if(!App.DEBUG) {
-                    final String ip = mEditTextIP.getText().toString();
-                    Log.v(App.TAG,"mEditTextIP content: "+ip);
+                    if(mBoundService.isConnected()) {
+                        startMainScreen();
+                    } else {
+                        final String ip = mEditTextIP.getText().toString();
+                        Log.v(TAG,"mEditTextIP content: "+ip);
 
-                    // Save the data
-                    SharedPreferences.Editor editor = mSettings.edit();
-                    editor.putString(PreferenceKeys.HOST_IP, ip);
-                    editor.apply();
-                    Log.v(App.TAG,"IP Saved to preferences");
+                        // Save the data
+                        SharedPreferences.Editor editor = mSettings.edit();
+                        editor.putString(PreferenceKeys.HOST_IP, ip);
+                        editor.apply();
+                        Log.v(TAG,"IP Saved to preferences");
 
-                    mConnectDialog.setMessage("Connecting to "+ip+" ...");
-                    mConnectDialog.setCancelable(false);
-                    mConnectDialog.show();
+                        mConnectDialog.setMessage("Connecting to "+ip+" ...");
+                        mConnectDialog.setCancelable(false);
+                        mConnectDialog.show();
 
-                    mBoundService.connect();
+                        mBoundService.connect();
+                    }
                 } else {
-                    startActivity(new Intent(ConnectActivity.this,MainActivity.class));
+                    startMainScreen();
                 }
             }
         }
     };
 
     private boolean checkBound() {
-        if(mBound) {
-            Log.v(App.TAG,getClass().getSimpleName()+" - Activity is still bound");
+        if(isBound) {
+            Log.v(TAG,getClass().getSimpleName()+" - Activity is still bound");
         } else {
-            Log.v(App.TAG,getClass().getSimpleName()+" - Service is not bound to "+getClass().getSimpleName());
+            Log.v(TAG,getClass().getSimpleName()+" - Service is not bound to "+getClass().getSimpleName());
         }
-        return mBound;
+        return isBound;
     }
 
     @Override
     protected void onDestroy() {
-        Log.i(App.TAG,getClass().getSimpleName()+" - onDestroy");
-        if(mBound) {
+        Log.i(TAG,getClass().getSimpleName()+" - onDestroy");
+        if(isBound) {
             if(mBoundService != null) {
                 unbindService(mServiceConnection);
-                Log.v(App.TAG,getClass().getSimpleName()+" - unbinding from service");
+                Log.v(TAG,getClass().getSimpleName()+" - unbinding from service");
             }
-            mBound = false;
+            isBound = false;
         }
         super.onDestroy();
-    }
-
-    @Override
-    protected void onStop() {
-        Log.i(App.TAG,"onStop in ConnectActivity");
-        super.onStop();
     }
 }

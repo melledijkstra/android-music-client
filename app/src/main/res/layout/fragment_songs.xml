@@ -10,13 +10,16 @@
         android:layout_height="wrap_content">
 
         <ListView
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/songListView"
+            tools:listitem="@layout/song_item"
             android:transcriptMode="normal"
             android:choiceMode="singleChoice" />
 
         <TextView
+            android:text="NO SONGS"
+            android:gravity="center"
             android:id="@android:id/empty"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

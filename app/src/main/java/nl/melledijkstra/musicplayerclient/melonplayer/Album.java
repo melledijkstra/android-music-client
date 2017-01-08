@@ -14,12 +14,30 @@ import java.util.ArrayList;
  */
 public class Album implements Hydratable {
 
+    /**
+     * Identifier of an album
+     */
     private long ID;
+
+    /**
+     * Title of album
+     */
     private String title;
+
+    /**
+     * The cover of the album
+     */
+    @Nullable
     private Bitmap cover;
 
+    /**
+     * The list of songs that this album contains
+     */
     private ArrayList<Song> songList;
 
+    /**
+     * Check if this is a favorite album
+     */
     private boolean favorite;
 
     public Album(JSONObject exchangeData) {
@@ -27,13 +45,13 @@ public class Album implements Hydratable {
         this.Hydrate(exchangeData);
     }
 
-    public Album(String title, @Nullable Bitmap cover, boolean favorite) {
-        this(title, favorite);
+    public Album(long id, String title, @Nullable Bitmap cover, boolean favorite) {
+        this(id, title, favorite);
         this.favorite = favorite;
     }
 
-    // TODO: remove this nonsense
-    public Album(String title, boolean favorite) {
+    public Album(long id, String title, boolean favorite) {
+        this.ID = id;
         this.title = title;
         this.favorite = favorite;
         this.cover = null;
@@ -64,6 +82,7 @@ public class Album implements Hydratable {
         return title;
     }
 
+    @Nullable
     public Bitmap getCover() {
         return cover;
     }
@@ -88,4 +107,10 @@ public class Album implements Hydratable {
             songList.add(song);
         }
     }
+
+    @Override
+    public String toString() {
+        return title;
+    }
+
 }

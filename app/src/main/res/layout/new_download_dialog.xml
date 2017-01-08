@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:paddingTop="20dp"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/etYoutubeUrl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text|textUri"
+        android:hint="Youtube URL" />
+
+    <Spinner
+        android:id="@+id/spinChooseAlbum"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

@@ -14,7 +14,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.StringTokenizer;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
 import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
@@ -26,6 +27,7 @@ public class App extends Application {
 
     public static final String TAG = "musicplayerclient";
     public static MelonPlayer melonPlayer;
+    private HashSet<MessageReceiver> jsonReceivers;
 
     /**
      * If app is in DEBUG mode then no connection is needed and dummy data is used
@@ -37,12 +39,14 @@ public class App extends Application {
         public void onReceive(Context context, Intent intent) {
             String raw_json = intent.getStringExtra("msg");
             if(raw_json != null) {
-                Log.v(App.TAG,"Application - got message: "+raw_json);
                 try {
                     JSONObject json = new JSONObject(raw_json);
                     if(json.has("mplayer")) melonPlayer.onReceive(json.getJSONObject("mplayer"));
+                    for (MessageReceiver receiver : jsonReceivers) {
+                        receiver.onReceive(json);
+                    }
                 } catch (JSONException e) {
-                    Log.e(App.TAG,"Incorrect json data: "+e.getMessage());
+                    Log.e(TAG,"Incorrect json data: "+e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -56,10 +60,11 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        jsonReceivers = new HashSet<>();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         DEBUG = prefs.getBoolean(PreferenceKeys.DEBUG, false);
         // the musicclient should be notified when message comes in. It can then update it's state
-        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter(ConnectionService.MESSAGERECEIVED));
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter(MelonPlayerService.MESSAGERECEIVED));
     }
 
     /**
@@ -68,6 +73,14 @@ public class App extends Application {
     public void updateDebugState() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         DEBUG = prefs.getBoolean(PreferenceKeys.DEBUG, false);
+    }
+
+    public void registerMessageReceiver(MessageReceiver receiver) {
+        jsonReceivers.add(receiver);
+    }
+
+    public void unRegisterMessageReceiver(MessageReceiver receiver) {
+        jsonReceivers.remove(receiver);
     }
 
 }
