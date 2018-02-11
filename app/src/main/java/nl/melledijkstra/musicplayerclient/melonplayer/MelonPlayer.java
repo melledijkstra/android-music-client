@@ -12,21 +12,17 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
 
-import nl.melledijkstra.musicplayerclient.MessageReceiver;
+import nl.melledijkstra.musicplayerclient.grpc.MMPStatus;
 
 /**
- * <p>
- *     This class represents the Model object for the music player.
- *     It's knows the state of the python music player because it makes use of the MusicPlayerConnection class
- * </p>
  * <p>Created by Melle Dijkstra on 17-4-2016</p>
+ * <p>
+ * This class represents the Model object for the music player.
+ * It's stores and updates the state of the music player server
+ * </p>
  */
-public class MelonPlayer implements MessageReceiver {
+public class MelonPlayer {
 
-    // CONSTANTS
-    public static final String DEFAULT_IP = "192.168.1.200";
-    public static final int DEFAULT_PORT = 1010;
-    public static final int DEFAULT_TIMEOUT = 5000;
     private String TAG = MelonPlayer.class.getSimpleName();
 
     public enum States {
@@ -46,19 +42,19 @@ public class MelonPlayer implements MessageReceiver {
 
     private States state = States.NOTHINGSPECIAL;
 
-    public ArrayList<Album> albums;
+    public ArrayList<AlbumModel> albumModels;
 
     // current playing song
     @Nullable
-    private Song currentSong = null;
+    private SongModel currentSongModel = null;
 
     private float songPosition = -1f;
 
     private long currentTime = -1;
 
     @Nullable
-    public Song getCurrentSong() {
-        return currentSong;
+    public SongModel getCurrentSongModel() {
+        return currentSongModel;
     }
 
     public float getSongPosition() {
@@ -82,144 +78,121 @@ public class MelonPlayer implements MessageReceiver {
     }
 
     private HashSet<StateUpdateListener> stateListeners;
+
     public void registerStateChangeListener(StateUpdateListener listener) {
         stateListeners.add(listener);
     }
+
     public void unRegisterStateChangeListener(StateUpdateListener listener) {
         stateListeners.remove(listener);
     }
 
     private HashSet<AlbumListUpdateListener> albumListUpdateListeners;
+
     public void registerAlbumListChangeListener(AlbumListUpdateListener listener) {
         albumListUpdateListeners.add(listener);
     }
+
     public void unRegisterAlbumListChangeListener(AlbumListUpdateListener listener) {
         albumListUpdateListeners.remove(listener);
     }
 
     private HashSet<SongListUpdateListener> songListUpdateListeners;
+
     public void registerSongListChangeListener(SongListUpdateListener listener) {
         songListUpdateListeners.add(listener);
     }
+
     public void unRegisterSongListChangeListener(SongListUpdateListener listener) {
         songListUpdateListeners.remove(listener);
     }
 
     public MelonPlayer() {
-        stateListeners              = new HashSet<>();
-        albumListUpdateListeners    = new HashSet<>();
-        songListUpdateListeners     = new HashSet<>();
+        stateListeners = new HashSet<>();
+        albumListUpdateListeners = new HashSet<>();
+        songListUpdateListeners = new HashSet<>();
 
-        albums = new ArrayList<>();
+        albumModels = new ArrayList<>();
     }
 
-    @Override
-    public void onReceive(JSONObject obj) {
-        Log.i(TAG, "Setting new state of MelonPlayer");
+    public void setState(MMPStatus status) {
+        Log.v(TAG, "Setting new state of MelonPlayer");
+        currentSongModel = new SongModel(status.getCurrentSong());
         try {
-            // UPDATE CONTROL
-            if(obj.has("control")) {
-                JSONObject control = obj.getJSONObject("control");
-                if(control.has("state")) {
-                    switch(control.getString("state")) {
-                        case "State.Playing":
-                            state = States.PLAYING;
-                            break;
-                        case "State.Paused":
-                            state = States.PAUSED;
-                            break;
-                        case "State.Stopped":
-                            state = States.STOPPED;
-                            break;
-                        case "State.Opening":
-                            state = States.OPENING;
-                            break;
-                        case "State.Ended":
-                            state = States.ENDED;
-                            break;
-                        case "State.Buffering":
-                            state = States.BUFFERING;
-                            break;
-                        case "State.Error":
-                            state = States.ERROR;
-                            break;
-                        case "State.NothingSpecial":
-                            state = States.NOTHINGSPECIAL;
-                            break;
-                        default:
-                            state = States.NOTHINGSPECIAL;
-                            break;
-                    }
-                }
-                volume = control.getInt("volume");
-                songPosition = BigDecimal.valueOf(control.getDouble("position")).floatValue();
-                if(!control.isNull("time")) {
-                    currentTime = control.getLong("time");
-                } else {
-                    currentTime = 0;
-                }
-                mute = control.getBoolean("mute");
-                if(!control.isNull("current_song")) {
-                    currentSong = new Song(control.getJSONObject("current_song"));
-                } else {
-                    currentSong = null;
-                }
-
-                Log.d(TAG, String.format(Locale.getDefault(), "volume: %d, position: %f, mute: %b, currentSong: %s",volume, songPosition, mute, currentSong));
-                for(StateUpdateListener listener : stateListeners) {
-                    listener.MelonPlayerStateUpdated();
-                }
-            }
-            // UPDATE ALBUMLIST
-            if(obj.has("albumlist") && obj.getJSONArray("albumlist") != null) {
-                JSONArray albumlist = obj.getJSONArray("albumlist");
-                albums.clear();
-                for(int i = 0; i < albumlist.length();i++) {
-                    try {
-                        Album album = new Album(albumlist.getJSONObject(i));
-                        albums.add(album);
-                    } catch (JSONException e) {
-                        Log.v(TAG,"Could not add song to listview - Exception:" +e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
-                for(AlbumListUpdateListener listener : albumListUpdateListeners) {
-                    listener.AlbumListUpdated();
-                }
-            }
-            // UPDATE SONGLIST
-            if(obj.has("songlist") && obj.has("albumid")) {
-                Log.d(TAG, "albumid from message: "+obj.getLong("albumid"));
-                if(obj.getJSONArray("songlist").length() > 0) {
-                    for (Album album : albums) {
-                        if(album.getID() == obj.getLong("albumid")) {
-                            album.fillSongList(obj.getJSONArray("songlist"));
-                        }
-                    }
-                }
-                for(SongListUpdateListener listener : songListUpdateListeners) {
-                    listener.SongListUpdated();
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
+            // Check if enum with same name exists for MelonPlayer.States, this should be the same
+            state = States.valueOf(status.getState().toString());
+        } catch (IllegalArgumentException e) {
+            // otherwise this exception is thrown and a default value is given to current state
+            state = States.NOTHINGSPECIAL;
         }
+        volume = status.getVolume();
+        songPosition = status.getPosition();
+        // currentTime = status.getCurrentTime();
+        mute = status.getMute();
+
+        Log.d(TAG, String.format(Locale.getDefault(), "%s '%s' volume: %d, position: %f, mute: %b", state, currentSongModel, volume, songPosition, mute));
+        for (StateUpdateListener listener : stateListeners) {
+            listener.MelonPlayerStateUpdated();
+        }
+        // UPDATE ALBUMLIST
+//        if (status.has("albumlist") && status.getJSONArray("albumlist") != null) {
+//            JSONArray albumlist = status.getJSONArray("albumlist");
+//            albumModels.clear();
+//            for (int i = 0; i < albumlist.length(); i++) {
+//                try {
+//                    albumlist.getJSONObject(i);
+//                    //AlbumModel albumModel =  new AlbumModel();
+//                    //albumModels.add(albumModel);
+//                } catch (JSONException e) {
+//                    Log.v(TAG, "Could not add song to listview - Exception:" + e.getMessage());
+//                    e.printStackTrace();
+//                }
+//            }
+//            for (AlbumListUpdateListener listener : albumListUpdateListeners) {
+//                listener.AlbumListUpdated();
+//            }
+//        }
+        // UPDATE SONGLIST
+//        if (status.has("songlist") && status.has("albumid")) {
+//            Log.d(TAG, "albumid from message: " + status.getLong("albumid"));
+//            if (status.getJSONArray("songlist").length() > 0) {
+//                for (AlbumModel albumModel : albumModels) {
+//                    if (albumModel.getID() == status.getLong("albumid")) {
+//                        //albumModel.fillSongList(status.getJSONArray("songlist"));
+//                    }
+//                }
+//            }
+//            for (SongListUpdateListener listener : songListUpdateListeners) {
+//                listener.SongListUpdated();
+//            }
+//        }
     }
 
-    public Album findAlbum(long id) {
-        for (Album album : albums) {
-            if (album.getID() == id) {
-                return album;
+    /**
+     * Finds an Album by ID
+     * @param id The ID of the album
+     * @return The album or null if album not found
+     */
+    @Nullable
+    public AlbumModel findAlbum(long id) {
+        for (AlbumModel albumModel : albumModels) {
+            if (albumModel.getID() == id) {
+                return albumModel;
             }
         }
         return null;
     }
 
+    /**
+     * Find song by given ID
+     * @param songid The song ID
+     * @return The song or null if not found
+     */
     @Nullable
-    private Song findSongByID(long songid) {
-        for(Album album: albums) {
-            for (Song song : album.getSongList()) {
-                if(song.getID() == songid) return song;
+    private SongModel findSongByID(long songid) {
+        for (AlbumModel albumModel : albumModels) {
+            for (SongModel songModel : albumModel.getSongList()) {
+                if (songModel.getID() == songid) return songModel;
             }
         }
         return null;
@@ -227,10 +200,13 @@ public class MelonPlayer implements MessageReceiver {
 
     @Override
     public String toString() {
-        return String.format(Locale.ENGLISH, "[state: %s, volume: %d, albumcount: %d]",state, volume, albums.size());
+        return String.format(Locale.ENGLISH, "[state: %s, volume: %d, albumcount: %d]", state, volume, albumModels.size());
     }
 
     public interface StateUpdateListener {
+        /**
+         * Is invoked when status is changed
+         */
         void MelonPlayerStateUpdated();
     }
 

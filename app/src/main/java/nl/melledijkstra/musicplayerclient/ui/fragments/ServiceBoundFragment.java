@@ -9,8 +9,6 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 
-import org.json.JSONObject;
-
 import nl.melledijkstra.musicplayerclient.MelonPlayerService;
 
 /**
@@ -39,14 +37,14 @@ public class ServiceBoundFragment extends Fragment {
         public void onServiceDisconnected(ComponentName className) {
             boundService = null;
             isBound = false;
-            onDisconnect();
+            onUnbound();
         }
     };
 
     /**
      * Run when service is disconnected
      */
-    protected void onDisconnect() {}
+    protected void onUnbound() {}
 
     /**
      * Run when service is bound
@@ -69,17 +67,6 @@ public class ServiceBoundFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         doUnbindService();
-    }
-
-    /**
-     * Shortcut for sending messages with the bound service
-     * This method checks if the fragment is bound
-     * @param message the message you want to send
-     */
-    protected void sendMessageIfBound(JSONObject message) {
-        if(isBound) {
-            boundService.sendMessage(message);
-        }
     }
 
 }

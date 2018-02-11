@@ -2,7 +2,6 @@ package nl.melledijkstra.musicplayerclient.ui.adapters;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.renderscript.Type;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,8 +11,9 @@ import android.widget.TextView;
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.Utils;
-import nl.melledijkstra.musicplayerclient.melonplayer.Album;
-import nl.melledijkstra.musicplayerclient.melonplayer.Song;
+import nl.melledijkstra.musicplayerclient.grpc.Album;
+import nl.melledijkstra.musicplayerclient.melonplayer.AlbumModel;
+import nl.melledijkstra.musicplayerclient.melonplayer.SongModel;
 
 /**
  * Created by melle on 7-12-2016.
@@ -23,21 +23,21 @@ public class SongAdapter extends BaseAdapter {
 
     private static final String TAG = SongAdapter.class.getSimpleName();
     private Context mContext;
-    private Album album;
+    private AlbumModel albumModel;
 
-    public SongAdapter(Context mContext, long albumid) {
+    public SongAdapter(Context mContext, AlbumModel album) {
         this.mContext = mContext;
-        this.album = App.melonPlayer.findAlbum(albumid);
+        this.albumModel = album;
     }
 
     @Override
     public int getCount() {
-        return album.getSongList().size();
+        return albumModel.getSongList().size();
     }
 
     @Override
-    public Song getItem(int position) {
-        return album.getSongList().get(position);
+    public SongModel getItem(int position) {
+        return albumModel.getSongList().get(position);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class SongAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View item;
-        Song song = (position <= album.getSongList().size()) ? album.getSongList().get(position) : null;
+        SongModel songModel = (position <= albumModel.getSongList().size()) ? albumModel.getSongList().get(position) : null;
         if(convertView == null) {
             item = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.song_item, null);
         } else {
@@ -57,11 +57,11 @@ public class SongAdapter extends BaseAdapter {
 
         // song title
         TextView tvTitle = (TextView) item.findViewById(R.id.song_title);
-        tvTitle.setText(song != null ? song.getTitle() : null);
+        tvTitle.setText(songModel != null ? songModel.getTitle() : null);
         TextView tvDuration = (TextView) item.findViewById(R.id.song_duration);
-        if(song != null && song.getDuration() != null) {
+        if(songModel != null && songModel.getDuration() != 0) {
             tvDuration.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
-            tvDuration.setText(Utils.millisecondsToDurationFormat(song.getDuration()));
+            tvDuration.setText(Utils.millisecondsToDurationFormat(songModel.getDuration()));
         } else {
             tvDuration.setTypeface(null, Typeface.ITALIC);
             tvDuration.setText("Undefined");

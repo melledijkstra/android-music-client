@@ -16,12 +16,14 @@ import android.widget.TextView;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.Utils;
+import nl.melledijkstra.musicplayerclient.grpc.MediaControl;
+import nl.melledijkstra.musicplayerclient.grpc.PlaybackControl;
+import nl.melledijkstra.musicplayerclient.grpc.PositionControl;
+import nl.melledijkstra.musicplayerclient.grpc.VolumeControl;
 import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
-import nl.melledijkstra.musicplayerclient.melonplayer.Song;
-import nl.melledijkstra.musicplayerclient.messaging.MessageBuilder;
+import nl.melledijkstra.musicplayerclient.melonplayer.SongModel;
 
 /**
  * <p>Created by Melle Dijkstra on 17-4-2016</p>
@@ -38,84 +40,108 @@ public class MusicControllerFragment extends ServiceBoundFragment implements Mel
 
     boolean isDragging;
 
+    AlertDialog volumeDialog;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        App.melonPlayer.registerStateChangeListener(this);
         numberOfFrags++;
-        Log.d(TAG, "There are currently "+numberOfFrags+" control fragments running");
+        Log.d(TAG, "There are currently " + numberOfFrags + " control fragments running");
+
+        View dialogView = getActivity().getLayoutInflater().inflate(R.layout.change_volume_dialog, null);
+        sbVolume = (SeekBar) dialogView.findViewById(R.id.sbVolume);
+        sbVolume.setOnSeekBarChangeListener(onVolumeSeekbarChange);
+
+        volumeDialog = new AlertDialog.Builder(getContext())
+                .setTitle("Change Volume")
+                .setView(dialogView)
+                .setOnKeyListener(new DialogInterface.OnKeyListener() {
+                    @Override
+                    public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                        return event.getAction() == KeyEvent.ACTION_DOWN && getActivity().onKeyDown(keyCode, event);
+                    }
+                }).create();
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        Log.v(TAG,"Fragment created");
+        Log.v(TAG, "Fragment created");
     }
 
     @Override
     protected void onBounded() {
         super.onBounded();
-        boundService.sendMessage(new MessageBuilder().status().build());
+        boundService.getMelonPlayer().registerStateChangeListener(this);
+    }
+
+    @Override
+    protected void onUnbound() {
+        super.onUnbound();
+        boundService.getMelonPlayer().unRegisterStateChangeListener(this);
     }
 
     private View.OnClickListener onPlayPauseClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            sendMessageIfBound(new MessageBuilder().pause().build());
+            if (isBound) {
+                boundService.musicPlayerStub.play(MediaControl.newBuilder()
+                        .setState(MediaControl.State.PAUSE).build(), boundService.defaultMMPResponseStreamObserver);
+            }
         }
     };
 
     private View.OnClickListener onPreviousClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            sendMessageIfBound(new MessageBuilder().previous().build());
+            if (isBound) {
+                boundService.musicPlayerStub.previous(PlaybackControl.getDefaultInstance(), boundService.defaultMMPResponseStreamObserver);
+            }
         }
     };
 
     private View.OnClickListener onNextClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            sendMessageIfBound(new MessageBuilder().next().build());
+            if (isBound) {
+                boundService.musicPlayerStub.next(PlaybackControl.getDefaultInstance(), boundService.defaultMMPResponseStreamObserver);
+            }
         }
     };
 
     private View.OnClickListener onChangeVolumeClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            View dialogView = getActivity().getLayoutInflater().inflate(R.layout.change_volume_dialog, null);
-            sbVolume = (SeekBar) dialogView.findViewById(R.id.sbVolume);
-            sbVolume.setProgress(App.melonPlayer.getVolume());
-            sbVolume.setOnSeekBarChangeListener(onVolumeSeekbarChange);
-
-            new AlertDialog.Builder(getContext())
-                    .setTitle("Change Volume")
-                    .setView(dialogView)
-                    .setOnKeyListener(new DialogInterface.OnKeyListener() {
-                        @Override
-                        public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-                            return event.getAction() == KeyEvent.ACTION_DOWN && getActivity().onKeyDown(keyCode, event);
-                        }
-                    })
-                    .show();
+            if (isBound) {
+                sbVolume.setProgress(boundService.getMelonPlayer().getVolume());
+            }
+            volumeDialog.show();
         }
     };
 
     private SeekBar.OnSeekBarChangeListener onVolumeSeekbarChange = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if(fromUser && progress % 3 == 0) {
-                sendMessageIfBound(new MessageBuilder().changeVol(progress).build());
+            if (fromUser && progress % 3 == 0) {
+                if (isBound) {
+                    boundService.musicPlayerStub.changeVolume(VolumeControl.newBuilder()
+                            .setVolumeLevel(progress)
+                            .build(), boundService.defaultMMPResponseStreamObserver);
+                }
             }
         }
 
         @Override
         public void onStartTrackingTouch(SeekBar seekBar) {
-
         }
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-            sendMessageIfBound(new MessageBuilder().changeVol(seekBar.getProgress()).build());
+            if (isBound) {
+                boundService.musicPlayerStub.changeVolume(VolumeControl.newBuilder()
+                        .setVolumeLevel(seekBar.getProgress())
+                        .build(), boundService.defaultMMPResponseStreamObserver);
+            }
         }
     };
 
@@ -123,10 +149,10 @@ public class MusicControllerFragment extends ServiceBoundFragment implements Mel
 
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if(fromUser) {
-                Song curSong = App.melonPlayer.getCurrentSong();
-                if(curSong != null) {
-                    long time = Math.round(curSong.getDuration() * (progress / 100f));
+            if (fromUser) {
+                SongModel curSongModel = boundService.getMelonPlayer().getCurrentSongModel();
+                if (curSongModel != null) {
+                    long time = Math.round(curSongModel.getDuration() * (progress / 100f));
                     tvCurPos.setText(Utils.millisecondsToDurationFormat(time));
                 }
             }
@@ -140,19 +166,23 @@ public class MusicControllerFragment extends ServiceBoundFragment implements Mel
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
             isDragging = false;
-            boundService.sendMessage(new MessageBuilder().changePos(seekBar.getProgress()).build());
+            boundService.musicPlayerStub.changePosition(PositionControl.newBuilder()
+                    .setPosition(seekBar.getProgress())
+                    .build(), boundService.defaultMMPResponseStreamObserver);
         }
     };
 
-    private void startTimer() {
-        if(timer == null && App.melonPlayer.getState() == MelonPlayer.States.PLAYING) {
+    private void startTimerIfPlaying() {
+        if (isBound &&
+                timer == null &&
+                boundService.getMelonPlayer().getState() == MelonPlayer.States.PLAYING) {
             Log.d(TAG, "Starting status update timer");
             timer = new Timer(true);
             TimerTask timerTask = new TimerTask() {
                 @Override
                 public void run() {
-                    if(isBound) {
-                        boundService.sendMessage(new MessageBuilder().status().build());
+                    if (isBound) {
+                        boundService.retrieveNewStatus();
                     }
                 }
             };
@@ -161,7 +191,7 @@ public class MusicControllerFragment extends ServiceBoundFragment implements Mel
     }
 
     private void stopTimer() {
-        if(timer != null) {
+        if (timer != null) {
             Log.d(TAG, "Stopping update timer");
             timer.cancel();
             timer = null;
@@ -195,64 +225,77 @@ public class MusicControllerFragment extends ServiceBoundFragment implements Mel
     @Override
     public void onDestroy() {
         super.onDestroy();
-        App.melonPlayer.unRegisterStateChangeListener(this);
-        Log.d(TAG, "Fragment destroyed");
+        if (boundService != null) {
+            boundService.getMelonPlayer().unRegisterStateChangeListener(this);
+        }
+        if(volumeDialog.isShowing()) {
+            volumeDialog.dismiss();
+        }
+        Log.i(TAG, "onDestroy");
     }
 
     @Override
     public void MelonPlayerStateUpdated() {
-        int curPosition = Math.round(App.melonPlayer.getSongPosition());
-        // Don't update the music time seekbar when user is dragging
-        if (curPosition > 0 && !isDragging) {
-            sbMusicTime.setProgress(curPosition);
-        } else {
-            sbMusicTime.setProgress(0);
-        }
+        // This call can be invoked from another thread
+        // So make sure we are update UI on the UI thread
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                MelonPlayer melonPlayer = boundService.getMelonPlayer();
+                int curPosition = Math.round(melonPlayer.getSongPosition());
+                // Don't update the music time seekbar when user is dragging
+                if (curPosition > 0 && !isDragging) {
+                    sbMusicTime.setProgress(curPosition);
+                } else {
+                    sbMusicTime.setProgress(0);
+                }
 
-        if(App.melonPlayer.getState() == MelonPlayer.States.PLAYING) {
-            // TODO: make svg animation
-            btnPlayPause.setImageResource(R.drawable.ic_pause_white_24dp);
-            startTimer();
-        } else {
-            btnPlayPause.setImageResource(R.drawable.ic_action_playback_play_white);
-            stopTimer();
-        }
+                if (melonPlayer.getState() == MelonPlayer.States.PLAYING) {
+                    // TODO: make svg animation
+                    btnPlayPause.setImageResource(R.drawable.ic_pause_white_24dp);
+                    startTimerIfPlaying();
+                } else {
+                    btnPlayPause.setImageResource(R.drawable.ic_action_playback_play_white);
+                    stopTimer();
+                }
 
-        Song currentSong = App.melonPlayer.getCurrentSong();
+                SongModel currentSongModel = melonPlayer.getCurrentSongModel();
 
-        if(currentSong != null && currentSong.getTitle() != null) {
-            tvCurrentSong.setText(currentSong.getTitle());
-            tvCurrentSong.setVisibility(View.VISIBLE);
-        } else {
-            tvCurrentSong.setText("-");
-            tvCurrentSong.setVisibility(View.GONE);
-        }
+                if (currentSongModel != null && currentSongModel.getTitle() != null) {
+                    tvCurrentSong.setText(currentSongModel.getTitle());
+                    tvCurrentSong.setVisibility(View.VISIBLE);
+                } else {
+                    tvCurrentSong.setText("-");
+                    tvCurrentSong.setVisibility(View.GONE);
+                }
 
-        if(currentSong != null && currentSong.getDuration() > 0) {
-            tvSongDuration.setText(Utils.millisecondsToDurationFormat(currentSong.getDuration()));
-        } else {
-            tvSongDuration.setText("00:00:00");
-        }
+                if (currentSongModel != null && currentSongModel.getDuration() > 0) {
+                    tvSongDuration.setText(Utils.millisecondsToDurationFormat(currentSongModel.getDuration()));
+                } else {
+                    tvSongDuration.setText("00:00:00");
+                }
 
-        long currentTime = App.melonPlayer.getCurrentTime();
-        if(currentTime > 0) {
-            tvCurPos.setText(Utils.millisecondsToDurationFormat(currentTime));
-        } else {
-            tvCurPos.setText("00:00:00");
-        }
+                long currentTime = melonPlayer.getCurrentTime();
+                if (currentTime > 0) {
+                    tvCurPos.setText(Utils.secondsToDurationFormat(currentTime));
+                } else {
+                    tvCurPos.setText("00:00:00");
+                }
 
-        if(sbVolume != null) {
-            sbVolume.setProgress(App.melonPlayer.getVolume());
-        }
+                if (sbVolume != null) {
+                    sbVolume.setProgress(melonPlayer.getVolume());
+                }
 
-        if(App.melonPlayer.getState() == MelonPlayer.States.STOPPED ||
-                App.melonPlayer.getState() == MelonPlayer.States.ENDED) {
-            tvCurPos.setText("00:00:00");
-            tvSongDuration.setText("00:00:00");
-            tvCurrentSong.setText("");
-            tvCurrentSong.setVisibility(View.GONE);
-            sbMusicTime.setProgress(0);
-        }
+                if (melonPlayer.getState() == MelonPlayer.States.STOPPED ||
+                        melonPlayer.getState() == MelonPlayer.States.ENDED) {
+                    tvCurPos.setText("00:00:00");
+                    tvSongDuration.setText("00:00:00");
+                    tvCurrentSong.setText("");
+                    tvCurrentSong.setVisibility(View.GONE);
+                    sbMusicTime.setProgress(0);
+                }
+            }
+        });
     }
 
     @Override
@@ -264,7 +307,7 @@ public class MusicControllerFragment extends ServiceBoundFragment implements Mel
     @Override
     public void onResume() {
         super.onResume();
-        startTimer();
+        startTimerIfPlaying();
     }
 
     @Override

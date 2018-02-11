@@ -3,7 +3,6 @@ package nl.melledijkstra.musicplayerclient.ui;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -11,6 +10,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -37,10 +37,10 @@ import java.util.Calendar;
 
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.MelonPlayerService;
-import nl.melledijkstra.musicplayerclient.MessageReceiver;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.melonplayer.Album;
-import nl.melledijkstra.musicplayerclient.messaging.MessageBuilder;
+import nl.melledijkstra.musicplayerclient.Utils;
+import nl.melledijkstra.musicplayerclient.grpc.VolumeControl;
+import nl.melledijkstra.musicplayerclient.melonplayer.AlbumModel;
 import nl.melledijkstra.musicplayerclient.ui.fragments.AlbumsFragment;
 import nl.melledijkstra.musicplayerclient.ui.fragments.SongsFragment;
 import nl.melledijkstra.musicplayerclient.ui.fragments.YoutubeFragment;
@@ -48,48 +48,48 @@ import nl.melledijkstra.musicplayerclient.ui.fragments.YoutubeFragment;
 /**
  * Controller for the Main screen. This screen has the controls and information about the musicplayer
  */
-public class MainActivity extends AppCompatActivity implements MessageReceiver {
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     public static final int REQUEST_CODE = 828453;
-    // The connection service
-    public MelonPlayerService mBoundService;
+
     private static int activities = 0;
 
-    // Variable for checking if service is bound
-    private boolean mBound = false;
-
-    // UI views
-    private Toolbar toolbar;
     private DrawerLayout drawer;
     private ActionBarDrawerToggle toggle;
-    private NavigationView drawerNavigation;
-
-    private IntentFilter mBroadcastFilter;
 
     // Fragments
     //    MusicControllerFragment mPlayerFragment;
     //    YoutubeFragment mYTFragment;
     //    SongsFragment mSongsFragment;
-    //    AlbumsFragment mAlbumsFragment;
+    AlbumsFragment mAlbumsFragment;
 
     // SharedPreferences object to get settings from SettingsActivity
     SharedPreferences settings;
 
+    // The connection service
+    public MelonPlayerService mBoundService;
+    // Variable for checking if service is bound
+    private boolean mBound = false;
+
     // Variable for checking if broadcast receiver is registered
     boolean mReceiverRegistered;
+    private IntentFilter mBroadcastFilter;
 
     private BroadcastReceiver bReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.v(TAG, MainActivity.this.getClass().getSimpleName() + " - BROADCAST RECEIVED: " + intent.getAction());
-            switch (intent.getAction()) {
-                case MelonPlayerService.DISCONNECTED:
-                    // if host disconnects then go to ConnectActivity
-                    Intent startConnectActivity = new Intent(MainActivity.this, ConnectActivity.class);
-                    startActivity(startConnectActivity);
-                    finish();
-                    break;
+            Log.v(TAG, "BROADCAST RECEIVED: " + intent.getAction());
+            String action = intent.getAction();
+            if (action != null) {
+                switch (action) {
+                    case MelonPlayerService.DISCONNECTED:
+                        // if host disconnects then go to ConnectActivity
+                        Intent startConnectActivity = new Intent(MainActivity.this, ConnectActivity.class);
+                        startActivity(startConnectActivity);
+                        finish();
+                        break;
+                }
             }
         }
     };
@@ -101,13 +101,13 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
         activities++;
         Log.d(TAG, "there are currently " + activities + " MainActivities running");
 
-        Log.i(TAG, getClass().getSimpleName() + " - onCreate runs");
+        Log.i(TAG, "onCreate");
+
+        startService(new Intent(this, MelonPlayerService.class));
+        bindService(new Intent(this, MelonPlayerService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
 
         mBroadcastFilter = new IntentFilter();
         mBroadcastFilter.addAction(MelonPlayerService.DISCONNECTED);
-        mBroadcastFilter.addAction(MelonPlayerService.UPDATE);
-
-        ((App) getApplication()).registerMessageReceiver(this);
 
         // Get SharedPreferences object to get settings from SettingsActivity
         settings = PreferenceManager.getDefaultSharedPreferences(this);
@@ -121,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
 
     public void initializeUI() {
         // Setup toolbar
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         if (getSupportActionBar() != null) {
@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        drawerNavigation = (NavigationView) findViewById(R.id.drawer_navigation);
+        NavigationView drawerNavigation = (NavigationView) findViewById(R.id.drawer_navigation);
         if (drawerNavigation != null) {
             drawerNavigation.setNavigationItemSelectedListener(onNavigationItemClick);
             drawerNavigation.getHeaderView(0).setOnClickListener(new View.OnClickListener() {
@@ -171,12 +171,15 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
 
     NavigationView.OnNavigationItemSelectedListener onNavigationItemClick = new NavigationView.OnNavigationItemSelectedListener() {
         @Override
-        public boolean onNavigationItemSelected(MenuItem item) {
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             Fragment fragment = null;
             switch (item.getItemId()) {
                 case R.id.drawer_mplayer:
-                    fragment = new AlbumsFragment();
+                    if (mAlbumsFragment == null) {
+                        mAlbumsFragment = new AlbumsFragment();
+                    }
+                    fragment = mAlbumsFragment;
                     break;
                 case R.id.drawer_youtube:
                     fragment = new YoutubeFragment();
@@ -205,13 +208,19 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
             case KeyEvent.KEYCODE_VOLUME_UP:
-                if (mBound && mBoundService != null && mBoundService.isConnected()) {
-                    mBoundService.sendMessage(new MessageBuilder().volumeUp().build());
+                if (mBound && mBoundService != null) {
+                    int vol = Utils.Constrain(mBoundService.getMelonPlayer().getVolume() + 5, 0, 100);
+                    mBoundService.musicPlayerStub.changeVolume(VolumeControl.newBuilder()
+                            .setVolumeLevel(vol)
+                            .build(), mBoundService.defaultMMPResponseStreamObserver);
                 }
                 return true;
             case KeyEvent.KEYCODE_VOLUME_DOWN:
-                if (mBound && mBoundService != null && mBoundService.isConnected()) {
-                    mBoundService.sendMessage(new MessageBuilder().volumeDown().build());
+                if (mBound && mBoundService != null) {
+                    int vol = Utils.Constrain(mBoundService.getMelonPlayer().getVolume() - 5, 0, 100);
+                    mBoundService.musicPlayerStub.changeVolume(VolumeControl.newBuilder()
+                            .setVolumeLevel(vol)
+                            .build(), mBoundService.defaultMMPResponseStreamObserver);
                 }
                 return true;
             default:
@@ -236,24 +245,26 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
             case R.id.home:
                 drawer.openDrawer(GravityCompat.START);
                 return true;
-            case R.id.action_connect:
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which) {
-                            case DialogInterface.BUTTON_POSITIVE:
-                                mBoundService.disconnect();
-                                break;
-                            case DialogInterface.BUTTON_NEGATIVE:
-                                break;
-                        }
-                    }
-                };
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setMessage("Disconnect with " + mBoundService.getRemoteIp() + "?")
-                        .setPositiveButton("Disconnect", dialogClickListener)
-                        .show();
-                break;
+//            case R.id.action_connect:
+//                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialog, int which) {
+//                        switch (which) {
+//                            case DialogInterface.BUTTON_POSITIVE:
+//                                if (mBoundService != null) {
+//                                    mBoundService.disconnect();
+//                                }
+//                                break;
+//                            case DialogInterface.BUTTON_NEGATIVE:
+//                                break;
+//                        }
+//                    }
+//                };
+//                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//                builder.setMessage("Disconnect with MusicPlayer?")
+//                        .setPositiveButton("Disconnect", dialogClickListener)
+//                        .show();
+//                break;
             case R.id.action_settings:
                 Intent openSettingsActivity = new Intent(this, SettingsActivity.class);
                 startActivity(openSettingsActivity);
@@ -267,12 +278,12 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.i(TAG, getClass().getSimpleName() + " - onDestroy runs");
-        ((App) getApplication()).unRegisterMessageReceiver(this);
+        Log.i(TAG, "onDestroy");
         if (mServiceConnection != null && mBound) {
             unbindService(mServiceConnection);
-            Log.v(TAG, getClass().getSimpleName() + " - unbinding service");
+            Log.v(TAG, "Unbinding service");
         }
+        unregisterBroadcastReceiver();
     }
 
 
@@ -291,6 +302,17 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
                 finish();
             }
         }
+        registerBroadcastReceiver();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.v(TAG, "onPause");
+        unregisterBroadcastReceiver();
+    }
+
+    private void registerBroadcastReceiver() {
         if (!mReceiverRegistered) {
             LocalBroadcastManager.getInstance(this).registerReceiver(bReceiver, mBroadcastFilter);
             Log.v(TAG, "Broadcast listener registered");
@@ -298,10 +320,7 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
         }
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.v(TAG, "onPause");
+    private void unregisterBroadcastReceiver() {
         if (mReceiverRegistered && bReceiver != null) {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(bReceiver);
             mReceiverRegistered = false;
@@ -323,27 +342,26 @@ public class MainActivity extends AppCompatActivity implements MessageReceiver {
         }
     };
 
-    public void showSongsFragment(Album album) {
+    public void showSongsFragment(AlbumModel albumModel) {
         SongsFragment songsFragment = new SongsFragment();
         Bundle bundle = new Bundle();
-        bundle.putLong("albumid", album.getID());
-        Log.v(TAG, "Show songs of album: " + album.getTitle() + " (" + album.getID() + ")");
+        bundle.putLong("albumid", albumModel.getID());
+        Log.v(TAG, "Show songs of albumModel: " + albumModel.getTitle() + " (" + albumModel.getID() + ")");
         songsFragment.setArguments(bundle);
         getSupportFragmentManager()
                 .beginTransaction()
                 .addToBackStack(null)
                 .replace(R.id.music_content_container, songsFragment)
                 .commit();
-        setTitle(album.getTitle());
+        setTitle(albumModel.getTitle());
     }
 
-    @Override
     public void onReceive(JSONObject json) {
         try {
             if (json.has("message")) {
                 Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
             }
-            if(json.has("mplayer") && json.getJSONObject("mplayer").has("message")) {
+            if (json.has("mplayer") && json.getJSONObject("mplayer").has("message")) {
                 Toast.makeText(this, json.getJSONObject("mplayer").getString("message"), Toast.LENGTH_SHORT).show();
             }
         } catch (JSONException e) {

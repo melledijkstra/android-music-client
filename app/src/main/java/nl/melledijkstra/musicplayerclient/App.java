@@ -26,45 +26,19 @@ import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
 public class App extends Application {
 
     public static final String TAG = "musicplayerclient";
-    public static MelonPlayer melonPlayer;
-    private HashSet<MessageReceiver> jsonReceivers;
 
     /**
      * If app is in DEBUG mode then no connection is needed and dummy data is used
      */
     public static boolean DEBUG = false;
 
-    BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String raw_json = intent.getStringExtra("msg");
-            if(raw_json != null) {
-                try {
-                    JSONObject json = new JSONObject(raw_json);
-                    if(json.has("mplayer")) melonPlayer.onReceive(json.getJSONObject("mplayer"));
-                    for (MessageReceiver receiver : jsonReceivers) {
-                        receiver.onReceive(json);
-                    }
-                } catch (JSONException e) {
-                    Log.e(TAG,"Incorrect json data: "+e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-        }
-    };
-
-    public App() {
-        melonPlayer = new MelonPlayer();
-    }
+    public App() {}
 
     @Override
     public void onCreate() {
         super.onCreate();
-        jsonReceivers = new HashSet<>();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         DEBUG = prefs.getBoolean(PreferenceKeys.DEBUG, false);
-        // the musicclient should be notified when message comes in. It can then update it's state
-        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter(MelonPlayerService.MESSAGERECEIVED));
     }
 
     /**
@@ -73,14 +47,6 @@ public class App extends Application {
     public void updateDebugState() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         DEBUG = prefs.getBoolean(PreferenceKeys.DEBUG, false);
-    }
-
-    public void registerMessageReceiver(MessageReceiver receiver) {
-        jsonReceivers.add(receiver);
-    }
-
-    public void unRegisterMessageReceiver(MessageReceiver receiver) {
-        jsonReceivers.remove(receiver);
     }
 
 }

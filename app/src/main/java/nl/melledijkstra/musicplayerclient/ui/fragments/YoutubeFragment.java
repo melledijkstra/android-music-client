@@ -22,9 +22,8 @@ import java.util.ArrayList;
 
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.R;
-import nl.melledijkstra.musicplayerclient.melonplayer.Album;
+import nl.melledijkstra.musicplayerclient.melonplayer.AlbumModel;
 import nl.melledijkstra.musicplayerclient.melonplayer.YTDLDownload;
-import nl.melledijkstra.musicplayerclient.messaging.MessageBuilder;
 import nl.melledijkstra.musicplayerclient.ui.adapters.YoutubeDownloadAdapter;
 
 /**
@@ -34,22 +33,16 @@ public class YoutubeFragment extends ServiceBoundFragment {
 
     private static final String TAG = YoutubeFragment.class.getSimpleName();
 
-    // UI
+    // UI Components
     FloatingActionButton fabNewDownload;
     ListView listViewDownloadQueue;
 
     YoutubeDownloadAdapter adapter;
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-    }
-
-    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getActivity().setTitle("Youtube Downloader");
-
     }
 
     @Override
@@ -69,11 +62,11 @@ public class YoutubeFragment extends ServiceBoundFragment {
         fabNewDownload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                View dialogLayout = getLayoutInflater(null).inflate(R.layout.new_download_dialog, null);
+                View dialogLayout = getActivity().getLayoutInflater().inflate(R.layout.new_download_dialog, null);
 
                 final EditText etYoutubeUrl = (EditText) dialogLayout.findViewById(R.id.etYoutubeUrl);
                 ClipboardManager clipManager = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clipData = clipManager.getPrimaryClip();
+                ClipData clipData = clipManager != null ? clipManager.getPrimaryClip() : null;
                 if(clipData != null) {
                     for(int i = 0; i < clipData.getItemCount();i++) {
                         ClipData.Item item = clipData.getItemAt(i);
@@ -86,7 +79,7 @@ public class YoutubeFragment extends ServiceBoundFragment {
 
                 final Spinner albumSpinner = (Spinner) dialogLayout.findViewById(R.id.spinChooseAlbum);
 
-                albumSpinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, App.melonPlayer.albums));
+                albumSpinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, boundService.getMelonPlayer().albumModels));
 
                 AlertDialog dialog = new AlertDialog.Builder(getContext())
                         .setIcon(R.drawable.ic_action_youtube)
@@ -95,8 +88,8 @@ public class YoutubeFragment extends ServiceBoundFragment {
                         .setPositiveButton("Download", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Log.d(TAG, "Selected album: name("+albumSpinner.getSelectedItem()+") id("+((Album)albumSpinner.getSelectedItem()).getID()+")");
-                                sendMessageIfBound(new MessageBuilder().download(etYoutubeUrl.getText().toString(), ((Album)albumSpinner.getSelectedItem()).getID()).build());
+                                Log.d(TAG, "Selected album: name("+albumSpinner.getSelectedItem()+") id("+((AlbumModel)albumSpinner.getSelectedItem()).getID()+")");
+                                //sendMessageIfBound(new MessageBuilder().download(etYoutubeUrl.getText().toString(), ((AlbumModel)albumSpinner.getSelectedItem()).getID()).build());
                             }
                         })
                         .create();
