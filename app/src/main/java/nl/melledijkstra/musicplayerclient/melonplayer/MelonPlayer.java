@@ -87,30 +87,8 @@ public class MelonPlayer {
         stateListeners.remove(listener);
     }
 
-    private HashSet<AlbumListUpdateListener> albumListUpdateListeners;
-
-    public void registerAlbumListChangeListener(AlbumListUpdateListener listener) {
-        albumListUpdateListeners.add(listener);
-    }
-
-    public void unRegisterAlbumListChangeListener(AlbumListUpdateListener listener) {
-        albumListUpdateListeners.remove(listener);
-    }
-
-    private HashSet<SongListUpdateListener> songListUpdateListeners;
-
-    public void registerSongListChangeListener(SongListUpdateListener listener) {
-        songListUpdateListeners.add(listener);
-    }
-
-    public void unRegisterSongListChangeListener(SongListUpdateListener listener) {
-        songListUpdateListeners.remove(listener);
-    }
-
     public MelonPlayer() {
         stateListeners = new HashSet<>();
-        albumListUpdateListeners = new HashSet<>();
-        songListUpdateListeners = new HashSet<>();
 
         albumModels = new ArrayList<>();
     }
@@ -208,14 +186,6 @@ public class MelonPlayer {
          * Is invoked when status is changed
          */
         void MelonPlayerStateUpdated();
-    }
-
-    public interface AlbumListUpdateListener {
-        void AlbumListUpdated();
-    }
-
-    public interface SongListUpdateListener {
-        void SongListUpdated();
     }
 
 }

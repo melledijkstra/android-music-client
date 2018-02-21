@@ -8,36 +8,36 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import nl.melledijkstra.musicplayerclient.App;
+import java.util.ArrayList;
+
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.Utils;
-import nl.melledijkstra.musicplayerclient.grpc.Album;
-import nl.melledijkstra.musicplayerclient.melonplayer.AlbumModel;
 import nl.melledijkstra.musicplayerclient.melonplayer.SongModel;
 
 /**
- * Created by melle on 7-12-2016.
+ * <p>Created by melle on 7-12-2016.</p>
  */
 
 public class SongAdapter extends BaseAdapter {
 
-    private static final String TAG = SongAdapter.class.getSimpleName();
-    private Context mContext;
-    private AlbumModel albumModel;
+    private static final String TAG = "SongAdapter";
 
-    public SongAdapter(Context mContext, AlbumModel album) {
+    private Context mContext;
+    private ArrayList<SongModel> songModels;
+
+    public SongAdapter(Context mContext, ArrayList<SongModel> songModels) {
         this.mContext = mContext;
-        this.albumModel = album;
+        this.songModels = songModels;
     }
 
     @Override
     public int getCount() {
-        return albumModel.getSongList().size();
+        return songModels.size();
     }
 
     @Override
     public SongModel getItem(int position) {
-        return albumModel.getSongList().get(position);
+        return songModels.get(position);
     }
 
     @Override
@@ -48,9 +48,10 @@ public class SongAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View item;
-        SongModel songModel = (position <= albumModel.getSongList().size()) ? albumModel.getSongList().get(position) : null;
+        SongModel songModel = (position <= songModels.size()) ? songModels.get(position) : null;
         if(convertView == null) {
-            item = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.song_item, null);
+            item = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE))
+                    .inflate(R.layout.song_item, null);
         } else {
             item = convertView;
         }

@@ -21,6 +21,8 @@ import nl.melledijkstra.musicplayerclient.melonplayer.AlbumModel;
 
 public class AlbumAdapter extends BaseAdapter {
 
+    private static final String TAG = "AlbumAdapter";
+
     private Context mContext;
     private ArrayList<AlbumModel> albumModels;
 
@@ -48,10 +50,10 @@ public class AlbumAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         // TODO: This method needs improvement
         View item;
-        final AlbumModel albumModel = (position <= albumModels.size()) ? albumModels.get(position) : null;
+        AlbumModel albumModel = (position <= albumModels.size()) ? albumModels.get(position) : null;
         if(convertView == null) {
-            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            item = inflater.inflate(R.layout.album_item, null);
+            item = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE))
+                    .inflate(R.layout.album_item, null);
         } else {
             item = convertView;
         }

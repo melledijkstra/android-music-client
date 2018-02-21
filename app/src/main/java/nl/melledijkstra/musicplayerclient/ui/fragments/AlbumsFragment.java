@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,14 +21,12 @@ import nl.melledijkstra.musicplayerclient.grpc.Album;
 import nl.melledijkstra.musicplayerclient.grpc.AlbumList;
 import nl.melledijkstra.musicplayerclient.grpc.MediaData;
 import nl.melledijkstra.musicplayerclient.melonplayer.AlbumModel;
-import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
 import nl.melledijkstra.musicplayerclient.ui.MainActivity;
 import nl.melledijkstra.musicplayerclient.ui.adapters.AlbumAdapter;
 
 public class AlbumsFragment extends ServiceBoundFragment implements
         SwipeRefreshLayout.OnRefreshListener,
-        AdapterView.OnItemClickListener,
-        MelonPlayer.AlbumListUpdateListener {
+        AdapterView.OnItemClickListener {
 
     public static String TAG = "AlbumsFragment";
 
@@ -38,65 +35,14 @@ public class AlbumsFragment extends ServiceBoundFragment implements
 
     ArrayList<AlbumModel> albumModels;
     AlbumAdapter albumGridAdapter;
-    private ProgressDialog progressDialog;
+    ProgressDialog progressDialog;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         albumModels = new ArrayList<>();
         albumGridAdapter = new AlbumAdapter(getActivity(), albumModels);
-        progressDialog = new ProgressDialog(getContext());
-        progressDialog.setIndeterminate(true);
-        progressDialog.setCancelable(true);
-        progressDialog.setMessage("Retrieving Albums...");
         Log.v(TAG, "Fragment created");
-    }
-
-    @Override
-    protected void onBounded() {
-        progressDialog.show();
-        // When bound with the service get album information
-        boundService.getMelonPlayer().registerAlbumListChangeListener(this);
-        retrieveAlbumList();
-    }
-
-    private void retrieveAlbumList() {
-        if (isBound) {
-            boundService.musicPlayerStub.retrieveAlbumList(MediaData.getDefaultInstance(), new StreamObserver<AlbumList>() {
-                @Override
-                public void onNext(final AlbumList response) {
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.i(TAG, "Retrieved albums, count: "+response.getAlbumListCount());
-                            albumModels.clear();
-                            for (Album album : response.getAlbumListList()) {
-                                albumModels.add(new AlbumModel(album));
-                            }
-                            albumGridAdapter.notifyDataSetChanged();
-                        }
-                    });
-                }
-
-                @Override
-                public void onError(Throwable t) {
-                    t.printStackTrace();
-                    Log.i(TAG, "onError: "+t.getMessage());
-                }
-
-                @Override
-                public void onCompleted() {
-                    Log.i(TAG, "onCompleted: album list call done");
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            swipeLayout.setRefreshing(false);
-                            progressDialog.hide();
-                        }
-                    });
-                }
-            });
-        }
     }
 
     @Override
@@ -113,16 +59,20 @@ public class AlbumsFragment extends ServiceBoundFragment implements
 
         setListeners();
 
+        progressDialog = new ProgressDialog(getContext());
+        progressDialog.setIndeterminate(true);
+        progressDialog.setCancelable(true);
+        progressDialog.setMessage("Retrieving Albums...");
+
         return layout;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        if (App.DEBUG) {
-            boundService.getMelonPlayer().albumModels.clear();
-            Collections.addAll(boundService.getMelonPlayer().albumModels,
+        if (App.DEBUG && isBound) {
+            albumModels.clear();
+            Collections.addAll(albumModels,
                     new AlbumModel(0, "Chill", true),
                     new AlbumModel(1, "House", false),
                     new AlbumModel(2, "Classic", true),
@@ -132,35 +82,74 @@ public class AlbumsFragment extends ServiceBoundFragment implements
         }
     }
 
+    @Override
+    protected void onBounded() {
+        retrieveAlbumList();
+    }
+
+    private void retrieveAlbumList() {
+        if (isBound && boundService != null) {
+            progressDialog.show();
+            boundService.musicPlayerStub.retrieveAlbumList(MediaData.getDefaultInstance(), new StreamObserver<AlbumList>() {
+                @Override
+                public void onNext(final AlbumList response) {
+                    Log.i(TAG, "Retrieved albums, count: " + response.getAlbumListCount());
+                    // TODO: find better way to store all album and song data, this is garbage code!!!!
+                    albumModels.clear();
+                    //boundService.getMelonPlayer().albumModels.clear();
+                    for (Album album : response.getAlbumListList()) {
+                        albumModels.add(new AlbumModel(album));
+                        //boundService.getMelonPlayer().albumModels.add(new AlbumModel(album));
+                    }
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            albumGridAdapter.notifyDataSetChanged();
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    Log.e(TAG, "grpc onError: ", t);
+                }
+
+                @Override
+                public void onCompleted() {
+                    Log.i(TAG, "onCompleted: album list call done");
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progressDialog.hide();
+                            swipeLayout.setRefreshing(false);
+                        }
+                    });
+                }
+            });
+        }
+    }
+
     private void setListeners() {
         swipeLayout.setOnRefreshListener(this);
     }
 
     @Override
     public void onRefresh() {
-        //boundService.sendMessage(new MessageBuilder().albumList().build());
         retrieveAlbumList();
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        AlbumModel albumModel = (position < boundService.getMelonPlayer().albumModels.size()) ? boundService.getMelonPlayer().albumModels.get(position) : null;
+        AlbumModel albumModel = (position < albumModels.size()) ? albumModels.get(position) : null;
+        Log.i(TAG, "AlbumModel: " + albumModel);
         if (albumModel != null) {
             ((MainActivity) getActivity()).showSongsFragment(albumModel);
         }
     }
 
     @Override
-    public void AlbumListUpdated() {
-        albumGridAdapter.notifyDataSetChanged();
-        if (progressDialog.isShowing()) progressDialog.dismiss();
-        if (swipeLayout != null && swipeLayout.isRefreshing()) swipeLayout.setRefreshing(false);
-    }
-
-    @Override
     public void onDestroy() {
         super.onDestroy();
-        boundService.getMelonPlayer().unRegisterAlbumListChangeListener(this);
         if (progressDialog.isShowing()) {
             progressDialog.dismiss();
         }
