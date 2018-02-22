@@ -1,7 +1,5 @@
 package nl.melledijkstra.musicplayerclient.melonplayer;
 
-import com.google.protobuf.GeneratedMessageLite;
-
 /**
  * <p>Created by melle on 19-5-2016.</p>
  */

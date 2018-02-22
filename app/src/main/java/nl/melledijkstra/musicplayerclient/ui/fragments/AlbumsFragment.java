@@ -30,24 +30,30 @@ public class AlbumsFragment extends ServiceBoundFragment implements
 
     public static String TAG = "AlbumsFragment";
 
+    // UI
     GridView albumGridView;
     SwipeRefreshLayout swipeLayout;
 
+    // The shown albums
     ArrayList<AlbumModel> albumModels;
     AlbumAdapter albumGridAdapter;
+
+    // progress indicator when retrieving albums
     ProgressDialog progressDialog;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        albumModels = new ArrayList<>();
-        albumGridAdapter = new AlbumAdapter(getActivity(), albumModels);
-        Log.v(TAG, "Fragment created");
+        Log.v(TAG, "onCreate: Fragment created");
+        if (isBound) {
+            albumModels = boundService.getMelonPlayer().albumModels;
+            albumGridAdapter = new AlbumAdapter(getActivity(), albumModels);
+        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        getActivity().setTitle("Albums");
+        getActivity().setTitle(getString(R.string.albums));
         View layout = inflater.inflate(R.layout.fragment_albums, container, false);
 
         // get views
@@ -70,16 +76,6 @@ public class AlbumsFragment extends ServiceBoundFragment implements
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        if (App.DEBUG && isBound) {
-            albumModels.clear();
-            Collections.addAll(albumModels,
-                    new AlbumModel(0, "Chill", true),
-                    new AlbumModel(1, "House", false),
-                    new AlbumModel(2, "Classic", true),
-                    new AlbumModel(3, "Future House", false),
-                    new AlbumModel(4, "Test", false),
-                    new AlbumModel(5, "Another AlbumModel", false));
-        }
     }
 
     @Override
@@ -90,16 +86,15 @@ public class AlbumsFragment extends ServiceBoundFragment implements
     private void retrieveAlbumList() {
         if (isBound && boundService != null) {
             progressDialog.show();
+            // TODO: move this to service
             boundService.musicPlayerStub.retrieveAlbumList(MediaData.getDefaultInstance(), new StreamObserver<AlbumList>() {
                 @Override
                 public void onNext(final AlbumList response) {
                     Log.i(TAG, "Retrieved albums, count: " + response.getAlbumListCount());
                     // TODO: find better way to store all album and song data, this is garbage code!!!!
                     albumModels.clear();
-                    //boundService.getMelonPlayer().albumModels.clear();
                     for (Album album : response.getAlbumListList()) {
                         albumModels.add(new AlbumModel(album));
-                        //boundService.getMelonPlayer().albumModels.add(new AlbumModel(album));
                     }
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
@@ -126,6 +121,17 @@ public class AlbumsFragment extends ServiceBoundFragment implements
                     });
                 }
             });
+        } else if (App.DEBUG) {
+            Log.i(TAG, "retrieveAlbumList: using debug albums");
+            boundService.getMelonPlayer().albumModels.clear();
+            Collections.addAll(boundService.getMelonPlayer().albumModels,
+                    new AlbumModel(0, "Chill", true),
+                    new AlbumModel(1, "House", false),
+                    new AlbumModel(2, "Classic", true),
+                    new AlbumModel(3, "Future House", false),
+                    new AlbumModel(4, "Test", false),
+                    new AlbumModel(5, "Another AlbumModel", false));
+            albumGridAdapter.notifyDataSetChanged();
         }
     }
 

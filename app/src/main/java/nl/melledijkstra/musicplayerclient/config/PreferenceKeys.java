@@ -21,13 +21,6 @@ public class PreferenceKeys {
     public static final String HOST_PORT = "host_port";
 
     /**
-     * The timeout length to wait for connection
-     */
-    public static final String TIMEOUT = "timeout";
-
-    public static final String LIST_ON_CONNECT = "list_on_connect";
-
-    /**
      * Debug state. If true then remote connection is simulated.
      */
     public static final String DEBUG = "debug";

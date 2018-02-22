@@ -28,4 +28,13 @@
     <string name="title_activity_remove_this">RemoveThisActivity</string>
     <string name="volume">Volume</string>
     <string name="queue">Queue</string>
+    <string name="new_name">New name:</string>
+    <string name="hint_youtube_url">Youtube URL</string>
+    <string name="new_album_location">New album location:</string>
+    <string name="time_placeholder">0:00</string>
+    <string name="app_logo">App Logo</string>
+    <string name="melon">Melon</string>
+    <string name="enter_musicplayer_ip">MusicPlayer IP</string>
+    <string name="album_cover">Album Cover</string>
+    <string name="albums">Albums</string>
 </resources>

@@ -44,7 +44,7 @@ public class App extends Application {
     /**
      * Checks if the debug state has changed and sets the debug state for the application
      */
-    public void updateDebugState() {
+    public void checkDebugState() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         DEBUG = prefs.getBoolean(PreferenceKeys.DEBUG, false);
     }

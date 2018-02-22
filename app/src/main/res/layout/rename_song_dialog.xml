@@ -8,7 +8,7 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:text="New name:"
+        android:text="@string/new_name"
         android:labelFor="@+id/edRenameSong"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

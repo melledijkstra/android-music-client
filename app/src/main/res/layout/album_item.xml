@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
         android:scaleType="centerCrop"
-        android:contentDescription="Album Cover"
+        android:contentDescription="@string/album_cover"
         tools:src="@drawable/default_cover"
         />
 

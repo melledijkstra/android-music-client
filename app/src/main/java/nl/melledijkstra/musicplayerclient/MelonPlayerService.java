@@ -33,6 +33,7 @@ import nl.melledijkstra.musicplayerclient.grpc.MMPResponse;
 import nl.melledijkstra.musicplayerclient.grpc.MMPStatus;
 import nl.melledijkstra.musicplayerclient.grpc.MMPStatusRequest;
 import nl.melledijkstra.musicplayerclient.grpc.MediaControl;
+import nl.melledijkstra.musicplayerclient.grpc.MediaDownloaderGrpc;
 import nl.melledijkstra.musicplayerclient.grpc.MusicPlayerGrpc;
 import nl.melledijkstra.musicplayerclient.grpc.PlaybackControl;
 import nl.melledijkstra.musicplayerclient.grpc.VolumeControl;
@@ -46,12 +47,15 @@ import nl.melledijkstra.musicplayerclient.ui.MainActivity;
  */
 public class MelonPlayerService extends Service implements MelonPlayer.StateUpdateListener {
 
+    private static final String TAG = "MelonPlayerService";
+
     // BROADCAST MESSAGES
+    // INCOMING
     public static final String INITIATE_CONNECTION = "nl.melledijkstra.musicplayerclient.INITIATE_CONNECTION";
+    // OUTGOING
     public static final String READY = "nl.melledijkstra.musicplayerclient.READY";
     public static final String DISCONNECTED = "nl.melledijkstra.musicplayerclient.DISCONNECTED";
     public static final String CONNECTFAILED = "nl.melledijkstra.musicplayerclient.CONNECTFAILED";
-    private static final String TAG = MelonPlayerService.class.getSimpleName();
 
     // ACTIONS
     private static final String ACTION_PLAY_PAUSE = "nl.melledijkstra.musicplayerclient.ACTION_PLAY_PAUSE";
@@ -65,15 +69,17 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
 
     private static final String CHANNEL_ID = "nl.melledijkstra.melonmusicplayer.FOREGROUND_NOTIFICATION";
 
-    // BROADCASTS
     private Integer volumeBeforeCalling;
     private PhoneStateReceiver phoneStateReceiver;
+
+    // BROADCASTS
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action != null) {
                 switch (action) {
+                    // this broadcast is called when some components wants the service to connect to the server
                     case INITIATE_CONNECTION:
                         // get current ip and port settings
                         String musicPlayerIp = mSettings.getString(PreferenceKeys.HOST_IP, null);
@@ -90,6 +96,9 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         }
     };
 
+    /**
+     * The MelonPlayer object which holds all state information from the server
+     */
     private volatile MelonPlayer melonPlayer;
 
     // Application settings
@@ -110,21 +119,25 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
     private ManagedChannel channel;
 
     /**
-     * Stub to initiate calls to server
+     * Stubs to initiate calls to server
      */
-    public volatile MusicPlayerGrpc.MusicPlayerStub musicPlayerStub;
+    public MusicPlayerGrpc.MusicPlayerStub musicPlayerStub;
+    public MediaDownloaderGrpc.MediaDownloaderStub mediaDownloaderStub;
 
     /**
      * Flag if connection result should be broadcasted
      */
     private volatile boolean broadcastConnectionResult;
 
+    /**
+     * Runnable passed to grpc channel to run when state is changed
+     */
     private Runnable grpcStateChangeListener = new Runnable() {
         @Override
         public void run() {
             if (channel != null) {
                 ConnectivityState state = channel.getState(false);
-                Log.i(TAG, "notifyWhenStateChanged: STATE CHANGED: " + state.toString());
+                Log.i(TAG, "grpcStateChangeListener: STATE CHANGED: " + state.toString());
                 channel.notifyWhenStateChanged(state, grpcStateChangeListener);
                 switch (state) {
                     case READY:
@@ -139,9 +152,10 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
                             Intent intent = new Intent(CONNECTFAILED);
                             intent.putExtra("state", state.toString());
                             LocalBroadcastManager.getInstance(MelonPlayerService.this).sendBroadcast(intent);
-                            Log.i(TAG, "initiateConnection: CONNECTFAILED broadcast sent");
+                            Log.i(TAG, "grpcStateChangeListener: CONNECTFAILED broadcast sent");
                             broadcastConnectionResult = false;
                         }
+                        Log.i(TAG, "initiateConnection: CONNECTFAILED broadcast sent");
                         break;
                     case SHUTDOWN:
                         disconnect();
@@ -155,6 +169,11 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         @Override
         public void onNext(MMPStatus newState) {
             melonPlayer.setState(newState);
+            if (newState.getState() == MMPStatus.State.PLAYING) {
+                startForeground(NOTIFICATION_ID, musicPlaybackNotification);
+            } else {
+                stopForeground(false);
+            }
         }
 
         @Override
@@ -163,9 +182,7 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         }
 
         @Override
-        public void onCompleted() {
-            Log.i(TAG, "onCompleted: new Status received");
-        }
+        public void onCompleted() {}
     };
 
     /**
@@ -174,12 +191,13 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
     public StreamObserver<MMPResponse> defaultMMPResponseStreamObserver = new StreamObserver<MMPResponse>() {
         @Override
         public void onNext(MMPResponse response) {
+            // check if an error occured at server
             if (response.getResult() == MMPResponse.Result.ERROR
                     && !response.getError().isEmpty()) {
                 Log.e(TAG, "GRPC SERVER: " + response.getError());
             }
-            if (!response.getMessage().isEmpty()) {
-                Toast.makeText(MelonPlayerService.this, response.getMessage(), Toast.LENGTH_SHORT).show();
+            if (!response.getMessage().isEmpty() && getApplicationContext() != null) {
+                Toast.makeText(getApplicationContext(), response.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -189,19 +207,17 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         }
 
         @Override
-        public void onCompleted() {
-            Log.i(TAG, "onCompleted: Call completed");
-        }
+        public void onCompleted() {}
     };
-    ;
 
     @Override
     public void onCreate() {
-        Log.v(TAG, "Service - onCreate");
         super.onCreate();
+        Log.i(TAG, "onCreate");
+
         // retrieve application settings
         mSettings = PreferenceManager.getDefaultSharedPreferences(this);
-        melonPlayer = new MelonPlayer();
+        melonPlayer = MelonPlayer.getInstance();
 
         // register broadcast receivers
         phoneStateReceiver = new PhoneStateReceiver();
@@ -211,13 +227,13 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
 
         String musicPlayerIp = mSettings.getString(PreferenceKeys.HOST_IP, null);
         int musicPlayerPort = mSettings.getInt(PreferenceKeys.HOST_PORT, Constants.DEFAULT_PORT);
+        previousIp = "";
 
+        // retrieve ip and try to make connection
         if (musicPlayerIp != null) {
             setupGrpc(musicPlayerIp, musicPlayerPort);
             previousIp = musicPlayerIp;
             initiateConnection(false);
-        } else {
-            previousIp = "";
         }
 
         notificationBuilder = new NotificationCompat.Builder(getApplicationContext());
@@ -227,8 +243,9 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = (intent != null) ? intent.getAction() : null;
-        Log.v(TAG, String.format(Locale.getDefault(), "Service - onStartCommand {action: %s, flags: %d, startId: %d}", action, flags, startId));
+        Log.v(TAG, String.format(Locale.getDefault(), "onStartCommand: {action: %s}", action));
 
+        // TODO: Add other playback actions
         if (action != null) {
             switch (action) {
                 case ACTION_PLAY_PAUSE:
@@ -248,6 +265,9 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
             }
         }
 
+        // if this service's process is killed while it is started (after returning from onStartCommand(Intent, int, int)),
+        // and there are no new start intents to deliver to it, then take the service out of the started state
+        // and don't recreate until a future explicit call to Context.startService(Intent)
         return START_NOT_STICKY;
     }
 
@@ -276,10 +296,11 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         Log.i(TAG, "setupGrpc: current state: " + state.toString());
         channel.notifyWhenStateChanged(state, grpcStateChangeListener);
         musicPlayerStub = MusicPlayerGrpc.newStub(channel);
+        mediaDownloaderStub = MediaDownloaderGrpc.newStub(channel);
     }
 
     /**
-     * Disconnects with the server, then broadcasts a message that service disconnected with server so they can react on the event
+     * Disconnects with the server and sends broadcasts so they can react accordingly
      */
     public void disconnect() {
         if (channel != null &&
@@ -287,7 +308,8 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
             try {
                 Log.i(TAG, "onDestroy: shutting down grpc client");
                 channel.shutdownNow();
-                if (channel != null && !channel.isTerminated()) channel.awaitTermination(1, TimeUnit.SECONDS);
+                if (channel != null && !channel.isTerminated())
+                    channel.awaitTermination(1, TimeUnit.SECONDS);
                 Log.i(TAG, "onDestroy: grpc client terminated");
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -319,16 +341,11 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         // if connection state is ready (connected) then send broadcast
         LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(READY));
         showNotification();
-        Log.i(TAG, "initiateConnection: READY broadcast sent");
+        Log.i(TAG, "connected: READY broadcast sent");
         musicPlayerStub.registerMMPNotify(MMPStatusRequest.getDefaultInstance(), new StreamObserver<MMPStatus>() {
             @Override
             public void onNext(MMPStatus status) {
                 melonPlayer.setState(status);
-                if(status.getState() == MMPStatus.State.PLAYING) {
-                    startForeground(NOTIFICATION_ID, musicPlaybackNotification);
-                } else {
-                    stopForeground(false);
-                }
             }
 
             @Override
@@ -345,8 +362,11 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
     }
 
     private void showNotification() {
+        Log.i(TAG, "showNotification");
         if (musicPlaybackNotification == null) {
-            musicPlaybackNotification = generatePlaybackNotification("Test", MelonPlayer.States.NOTHINGSPECIAL);
+            SongModel currentSong = melonPlayer.getCurrentSongModel();
+            String title = (currentSong != null) ? currentSong.getTitle() : "-";
+            musicPlaybackNotification = generatePlaybackNotification(title, melonPlayer.getState());
         }
         notificationManager.notify(NOTIFICATION_ID, musicPlaybackNotification);
     }
@@ -358,17 +378,8 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         return channel != null && channel.getState(false).equals(ConnectivityState.READY);
     }
 
-    /**
-     * checkConnection checks the current gRPC connection state and reacts accordingly
-     * run this method to check connection and send broadcasts when there is a change
-     */
-    public void checkConnection() {
-        // TODO: create this functionality
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
     private void removeNotification() {
-        Log.i(TAG, "Removing notification");
+        Log.i(TAG, "removeNotification");
         if (notificationManager != null) notificationManager.cancel(NOTIFICATION_ID);
     }
 
@@ -379,6 +390,7 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
      * @param state   The current state of the MelonPlayer
      */
     private Notification generatePlaybackNotification(String message, MelonPlayer.States state) {
+        // TODO: refactor this method
         notificationBuilder.setSmallIcon(R.drawable.notification_icon)
                 .setDeleteIntent(generatePendingIntent(ACTION_CLOSE))
                 // make notification available on lock screen
@@ -432,15 +444,13 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
 
     @Override
     public void onDestroy() {
-        Log.i(TAG, "Service - onDestroy");
+        super.onDestroy();
+        Log.i(TAG, "onDestroy");
         stopForeground(true);
-        //App.melonPlayer.unRegisterStateChangeListener(this);
         unregisterReceiver(phoneStateReceiver);
         disconnect();
-        super.onDestroy();
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return mServiceBinder;
@@ -490,17 +500,15 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
     // TODO: merge into single receiver!
     class PhoneStateReceiver extends BroadcastReceiver {
 
-        private final String TAG = PhoneStateReceiver.class.getSimpleName();
+        private static final String TAG = "PhoneStateReceiver";
 
         @Override
         public void onReceive(Context context, Intent intent) {
             try {
-                Log.d(TAG, "PHONE STATE CHANGED");
                 String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
-                Log.d(TAG, "State: " + state);
                 // Check if phone is ringing
                 if (state.equals(TelephonyManager.EXTRA_STATE_RINGING) && melonPlayer.getVolume() != -1) {
-                    Log.d(TAG, "Incoming call detected, turning down the volume"); // UX is everything ;)
+                    Log.i(TAG, "Incoming call detected, turning down the volume"); // UX is everything ;)
                     volumeBeforeCalling = melonPlayer.getVolume();
                     // TODO: let user choose to what volume the music player should go on incoming call
                     musicPlayerStub.changeVolume(VolumeControl.newBuilder().setVolumeLevel(15).build(), defaultMMPResponseStreamObserver);

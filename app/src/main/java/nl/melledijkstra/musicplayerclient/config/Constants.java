@@ -6,9 +6,6 @@ package nl.melledijkstra.musicplayerclient.config;
  */
 public class Constants {
 
-    /**
-     * Make it impossible to create an instance of this class
-     */
     private Constants() {}
 
     /** The default port to use for server connection */

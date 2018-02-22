@@ -6,6 +6,10 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -16,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.Spinner;
 
 import java.util.ArrayList;
@@ -27,20 +30,17 @@ import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.grpc.MediaControl;
 import nl.melledijkstra.musicplayerclient.grpc.MediaData;
-import nl.melledijkstra.musicplayerclient.grpc.MediaType;
 import nl.melledijkstra.musicplayerclient.grpc.Song;
 import nl.melledijkstra.musicplayerclient.grpc.SongList;
-import nl.melledijkstra.musicplayerclient.melonplayer.AlbumModel;
-import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
 import nl.melledijkstra.musicplayerclient.melonplayer.SongModel;
 import nl.melledijkstra.musicplayerclient.ui.adapters.SongAdapter;
 
-public class SongsFragment extends ServiceBoundFragment {
+public class SongsFragment extends ServiceBoundFragment implements SongAdapter.RecyclerItemClickListener {
 
     private static final String TAG = "SongsFragment";
 
     SwipeRefreshLayout refreshSwipeLayout;
-    ListView songListView;
+    RecyclerView songListRecyclerView;
     private long albumid;
 
     private ArrayList<SongModel> songModels;
@@ -53,7 +53,6 @@ public class SongsFragment extends ServiceBoundFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         songModels = new ArrayList<>();
-        songListAdapter = new SongAdapter(getActivity(), songModels);
         Log.d(TAG, "Fragment Created");
     }
 
@@ -62,14 +61,19 @@ public class SongsFragment extends ServiceBoundFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View layout = inflater.inflate(R.layout.fragment_songs, container, false);
 
+        // refreshlayout
         refreshSwipeLayout = (SwipeRefreshLayout) layout.findViewById(R.id.song_swipe_refresh_layout);
         refreshSwipeLayout.setOnRefreshListener(onRefreshListener);
 
-        songListView = (ListView) layout.findViewById(R.id.songListView);
-        songListView.setAdapter(songListAdapter);
-        songListView.setOnItemClickListener(onItemClick);
-        registerForContextMenu(songListView);
+        // recyclerview
+        songListAdapter = new SongAdapter(songModels, this);
+        songListRecyclerView = (RecyclerView) layout.findViewById(R.id.songListView);
+        songListRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        songListRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        songListRecyclerView.setAdapter(songListAdapter);
+        songListRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(), LinearLayoutManager.VERTICAL));
 
+        // dialog
         progressDialog = new ProgressDialog(getContext());
         progressDialog.setIndeterminate(true);
         progressDialog.setMessage("Retrieving Songs...");
@@ -158,22 +162,13 @@ public class SongsFragment extends ServiceBoundFragment {
         super.onActivityCreated(savedInstanceState);
         albumid = getArguments().getLong("albumid", -1);
         Log.d(TAG, "albumid: " + albumid);
-        if (App.DEBUG) {
-            songModels.clear();
-            Collections.addAll(songModels,
-                    new SongModel(0, "Artist - Test Song #1", 1000),
-                    new SongModel(1, "Artist - Test Song #1", 1000),
-                    new SongModel(2, "Artist - Test Song #1", 1000),
-                    new SongModel(3, "Artist - Test Song #1", 1000),
-                    new SongModel(4, "Artist - Test Song #1", 1000));
-        } else {
-            retrieveSongList();
-        }
+        retrieveSongList();
     }
 
     private void retrieveSongList() {
         if (isBound) {
             progressDialog.show();
+            // TODO: move this to service
             boundService.musicPlayerStub.retrieveSongList(MediaData.newBuilder().setId(albumid).build(), new StreamObserver<SongList>() {
                 @Override
                 public void onNext(final SongList response) {
@@ -206,6 +201,15 @@ public class SongsFragment extends ServiceBoundFragment {
                     });
                 }
             });
+        } else if (App.DEBUG) {
+            songModels.clear();
+            Collections.addAll(songModels,
+                    new SongModel(0, "Artist - Test Song #1", 1000),
+                    new SongModel(1, "Artist - Test Song #1", 1000),
+                    new SongModel(2, "Artist - Test Song #1", 1000),
+                    new SongModel(3, "Artist - Test Song #1", 1000),
+                    new SongModel(4, "Artist - Test Song #1", 1000));
+            songListAdapter.notifyDataSetChanged();
         }
     }
 
@@ -219,18 +223,6 @@ public class SongsFragment extends ServiceBoundFragment {
         }
     };
 
-    private AdapterView.OnItemClickListener onItemClick = new AdapterView.OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            if (isBound) {
-                boundService.musicPlayerStub.play(MediaControl.newBuilder()
-                        .setState(MediaControl.State.PLAY)
-                        .setSongId(songModels.get(position).getID())
-                        .build(), boundService.defaultMMPResponseStreamObserver);
-            }
-        }
-    };
-
     @Override
     public void onResume() {
         super.onResume();
@@ -241,6 +233,16 @@ public class SongsFragment extends ServiceBoundFragment {
         super.onDestroy();
         if (progressDialog.isShowing()) {
             progressDialog.dismiss();
+        }
+    }
+
+    @Override
+    public void onItemClick(View view, int position) {
+        if (isBound) {
+            boundService.musicPlayerStub.play(MediaControl.newBuilder()
+                    .setState(MediaControl.State.PLAY)
+                    .setSongId(songModels.get(position).getID())
+                    .build(), boundService.defaultMMPResponseStreamObserver);
         }
     }
 }

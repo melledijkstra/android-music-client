@@ -45,6 +45,12 @@ public class Utils {
         return (value>= min) && (value<= max);
     }
 
+
+    /**
+     * Milliseconds to duration format
+     * @param millis The amount of milliseconds
+     * @return The seconds in `%02d:%02d:%02d` format
+     */
     public static String millisecondsToDurationFormat(long millis) {
         long second = (millis / 1000) % 60;
         long minute = (millis / (1000 * 60)) % 60;
@@ -53,6 +59,11 @@ public class Utils {
         return String.format(Locale.getDefault(),"%02d:%02d:%02d", hour, minute, second);
     }
 
+    /**
+     * Format seconds to a displayable format
+     * @param seconds The amount of seconds
+     * @return The seconds in `%02d:%02d:%02d` format
+     */
     public static String secondsToDurationFormat(long seconds) {
         long second = seconds % 60;
         long minute = (seconds / 60) % 60;

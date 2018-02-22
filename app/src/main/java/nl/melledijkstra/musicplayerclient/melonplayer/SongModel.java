@@ -8,8 +8,19 @@ import nl.melledijkstra.musicplayerclient.grpc.Song;
  */
 public class SongModel implements Protoble<Song> {
 
+    /**
+     * The ID of the song
+     */
     private long ID;
+
+    /**
+     * The title of the song
+     */
     private String title;
+
+    /**
+     * The duration in seconds of the song
+     */
     private long duration;
 
     public SongModel(Song exchangeData) {
@@ -29,6 +40,8 @@ public class SongModel implements Protoble<Song> {
         duration = data.getDuration();
     }
 
+    // GETTERS
+
     public String getTitle() {
         return title;
     }
@@ -37,12 +50,12 @@ public class SongModel implements Protoble<Song> {
         return ID;
     }
 
+    public long getDuration() {
+        return duration;
+    }
+
     @Override
     public String toString() {
         return title;
-    }
-
-    public long getDuration() {
-        return duration;
     }
 }

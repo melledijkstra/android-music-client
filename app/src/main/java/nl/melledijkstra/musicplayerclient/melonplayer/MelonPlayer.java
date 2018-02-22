@@ -23,8 +23,12 @@ import nl.melledijkstra.musicplayerclient.grpc.MMPStatus;
  */
 public class MelonPlayer {
 
-    private String TAG = MelonPlayer.class.getSimpleName();
+    private static final String TAG = "MelonPlayer";
 
+    /** The singleton instance */
+    private static MelonPlayer instance;
+
+    /** The different states the melon player can reside in */
     public enum States {
         BUFFERING,
         PLAYING,
@@ -36,21 +40,29 @@ public class MelonPlayer {
         STOPPED
     }
 
+    /** The current volume of the melon player */
     private int volume = -1;
 
+    /** Flag if the melon player is muted */
     private boolean mute = false;
 
+    /** Current state of the melon player */
     private States state = States.NOTHINGSPECIAL;
 
+    /** Current list of albums */
     public ArrayList<AlbumModel> albumModels;
 
-    // current playing song
+    /** The currently playing song */
     @Nullable
     private SongModel currentSongModel = null;
 
+    /** The current position of the song */
     private float songPosition = -1f;
 
+    /** The current time of the playing song */
     private long currentTime = -1;
+
+    // GETTERS
 
     @Nullable
     public SongModel getCurrentSongModel() {
@@ -87,14 +99,32 @@ public class MelonPlayer {
         stateListeners.remove(listener);
     }
 
-    public MelonPlayer() {
-        stateListeners = new HashSet<>();
-
+    /**
+     * Private constructor
+     */
+    private MelonPlayer() {
         albumModels = new ArrayList<>();
+        stateListeners = new HashSet<>();
     }
 
+    /**
+     * Get the one and only instance of MelonPlayer object
+     * see Singleton Pattern
+     * @return The one and only instance of this class
+     */
+    public static MelonPlayer getInstance() {
+        if(instance == null) {
+            instance = new MelonPlayer();
+        }
+        return instance;
+    }
+
+    /**
+     * Set the new state of the melon player
+     * @param status The new status
+     */
     public void setState(MMPStatus status) {
-        Log.v(TAG, "Setting new state of MelonPlayer");
+        Log.i(TAG, "setting new state of MelonPlayer");
         currentSongModel = new SongModel(status.getCurrentSong());
         try {
             // Check if enum with same name exists for MelonPlayer.States, this should be the same
@@ -112,38 +142,6 @@ public class MelonPlayer {
         for (StateUpdateListener listener : stateListeners) {
             listener.MelonPlayerStateUpdated();
         }
-        // UPDATE ALBUMLIST
-//        if (status.has("albumlist") && status.getJSONArray("albumlist") != null) {
-//            JSONArray albumlist = status.getJSONArray("albumlist");
-//            albumModels.clear();
-//            for (int i = 0; i < albumlist.length(); i++) {
-//                try {
-//                    albumlist.getJSONObject(i);
-//                    //AlbumModel albumModel =  new AlbumModel();
-//                    //albumModels.add(albumModel);
-//                } catch (JSONException e) {
-//                    Log.v(TAG, "Could not add song to listview - Exception:" + e.getMessage());
-//                    e.printStackTrace();
-//                }
-//            }
-//            for (AlbumListUpdateListener listener : albumListUpdateListeners) {
-//                listener.AlbumListUpdated();
-//            }
-//        }
-        // UPDATE SONGLIST
-//        if (status.has("songlist") && status.has("albumid")) {
-//            Log.d(TAG, "albumid from message: " + status.getLong("albumid"));
-//            if (status.getJSONArray("songlist").length() > 0) {
-//                for (AlbumModel albumModel : albumModels) {
-//                    if (albumModel.getID() == status.getLong("albumid")) {
-//                        //albumModel.fillSongList(status.getJSONArray("songlist"));
-//                    }
-//                }
-//            }
-//            for (SongListUpdateListener listener : songListUpdateListeners) {
-//                listener.SongListUpdated();
-//            }
-//        }
     }
 
     /**
@@ -178,7 +176,7 @@ public class MelonPlayer {
 
     @Override
     public String toString() {
-        return String.format(Locale.ENGLISH, "[state: %s, volume: %d, albumcount: %d]", state, volume, albumModels.size());
+        return String.format(Locale.getDefault(), "[state: %s, volume: %d, albumcount: %d]", state, volume, albumModels.size());
     }
 
     public interface StateUpdateListener {

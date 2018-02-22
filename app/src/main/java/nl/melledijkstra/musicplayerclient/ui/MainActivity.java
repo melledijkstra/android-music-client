@@ -355,17 +355,4 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
         setTitle(albumModel.getTitle());
     }
-
-    public void onReceive(JSONObject json) {
-        try {
-            if (json.has("message")) {
-                Toast.makeText(this, json.getString("message"), Toast.LENGTH_SHORT).show();
-            }
-            if (json.has("mplayer") && json.getJSONObject("mplayer").has("message")) {
-                Toast.makeText(this, json.getJSONObject("mplayer").getString("message"), Toast.LENGTH_SHORT).show();
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
 }

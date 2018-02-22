@@ -52,8 +52,7 @@ public class AlbumAdapter extends BaseAdapter {
         View item;
         AlbumModel albumModel = (position <= albumModels.size()) ? albumModels.get(position) : null;
         if(convertView == null) {
-            item = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE))
-                    .inflate(R.layout.album_item, null);
+            item = LayoutInflater.from(mContext).inflate(R.layout.album_item, null);
         } else {
             item = convertView;
         }

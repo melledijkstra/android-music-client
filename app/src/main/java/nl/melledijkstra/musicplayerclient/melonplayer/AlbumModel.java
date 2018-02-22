@@ -51,7 +51,6 @@ public class AlbumModel implements Protoble<Album> {
     public AlbumModel(long id, String title, @Nullable Bitmap cover, boolean favorite) {
         this(id, title, favorite);
         this.cover = cover;
-        this.favorite = favorite;
     }
 
     public AlbumModel(long id, String title, boolean favorite) {
@@ -83,11 +82,24 @@ public class AlbumModel implements Protoble<Album> {
         return songModelList;
     }
 
-    public void fillSongList(List<Song> songlist) {
+    /**
+     * Just like fillSongList but for proto objects
+     * @param songlist The new song list
+     */
+    private void fillSongListFromProto(List<Song> songlist) {
         songModelList.clear();
         for (Song song : songlist) {
             songModelList.add(new SongModel(song));
         }
+    }
+
+    /**
+     * Fills the songlist of this album by given songs
+     * @param songlist The new song list
+     */
+    public void fillSongList(List<SongModel> songlist) {
+        songModelList.clear();
+        songModelList.addAll(songlist);
     }
 
     @Override
@@ -99,8 +111,9 @@ public class AlbumModel implements Protoble<Album> {
     public void Hydrate(Album obj) {
         ID = obj.getId();
         title = obj.getTitle();
+        // TODO: implement cover in proto file
         // TODO: implement favorite in proto file
         favorite = false;
-        fillSongList(obj.getSongListList());
+        fillSongListFromProto(obj.getSongListList());
     }
 }

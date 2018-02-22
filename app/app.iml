@@ -117,29 +117,35 @@
       <excludeFolder url="file://$MODULE_DIR$/build/outputs" />
       <excludeFolder url="file://$MODULE_DIR$/build/tmp" />
     </content>
-    <orderEntry type="jdk" jdkName="Android API 23 Platform" jdkType="Android SDK" />
+    <orderEntry type="jdk" jdkName="Android API 25 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="com.google.instrumentation:instrumentation-api:0.4.3@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:support-vector-drawable-23.4.0" level="project" />
-    <orderEntry type="library" name="com.android.support:support-v4-23.4.0" level="project" />
     <orderEntry type="library" name="org.glassfish:javax.annotation:10.0-b28@jar" level="project" />
     <orderEntry type="library" name="com.google.guava:guava:19.0@jar" level="project" />
-    <orderEntry type="library" name="com.google.errorprone:error_prone_annotations:2.1.2@jar" level="project" />
     <orderEntry type="library" name="com.google.protobuf:protobuf-lite:3.0.1@jar" level="project" />
-    <orderEntry type="library" name="io.opencensus:opencensus-contrib-grpc-metrics:0.10.0@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:appcompat-v7-23.4.0" level="project" />
-    <orderEntry type="library" name="io.opencensus:opencensus-api:0.10.0@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:animated-vector-drawable-23.4.0" level="project" />
     <orderEntry type="library" name="io.grpc:grpc-okhttp:1.9.0@jar" level="project" />
     <orderEntry type="library" name="com.squareup.okhttp:okhttp:2.5.0@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:design-23.4.0" level="project" />
-    <orderEntry type="library" name="com.android.support:support-annotations:23.4.0@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:support-core-ui-25.4.0" level="project" />
+    <orderEntry type="library" name="com.android.support:support-compat-25.4.0" level="project" />
     <orderEntry type="library" name="com.google.code.findbugs:jsr305:3.0.0@jar" level="project" />
-    <orderEntry type="library" name="io.grpc:grpc-protobuf-lite:1.9.0@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:support-annotations:25.4.0@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:support-core-utils-25.4.0" level="project" />
     <orderEntry type="library" name="com.squareup.okio:okio:1.13.0@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:support-v4-25.4.0" level="project" />
     <orderEntry type="library" name="io.grpc:grpc-core:1.9.0@jar" level="project" />
-    <orderEntry type="library" name="io.grpc:grpc-stub:1.9.0@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:support-fragment-25.4.0" level="project" />
+    <orderEntry type="library" name="com.android.support:support-media-compat-25.4.0" level="project" />
     <orderEntry type="library" name="io.grpc:grpc-context:1.9.0@jar" level="project" />
-    <orderEntry type="library" name="com.android.support:recyclerview-v7-23.4.0" level="project" />
+    <orderEntry type="library" name="com.google.instrumentation:instrumentation-api:0.4.3@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:animated-vector-drawable-25.4.0" level="project" />
+    <orderEntry type="library" name="com.google.errorprone:error_prone_annotations:2.1.2@jar" level="project" />
+    <orderEntry type="library" name="io.opencensus:opencensus-contrib-grpc-metrics:0.10.0@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:design-25.4.0" level="project" />
+    <orderEntry type="library" name="com.android.support:transition-25.4.0" level="project" />
+    <orderEntry type="library" name="io.opencensus:opencensus-api:0.10.0@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:appcompat-v7-25.4.0" level="project" />
+    <orderEntry type="library" name="io.grpc:grpc-protobuf-lite:1.9.0@jar" level="project" />
+    <orderEntry type="library" name="com.android.support:support-vector-drawable-25.4.0" level="project" />
+    <orderEntry type="library" name="com.android.support:recyclerview-v7-25.4.0" level="project" />
+    <orderEntry type="library" name="io.grpc:grpc-stub:1.9.0@jar" level="project" />
   </component>
 </module>

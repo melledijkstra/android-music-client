@@ -17,15 +17,6 @@
             android:id="@+id/gv_album_list"
             />
 
-        <TextView
-            android:text="NO ALBUMS"
-            android:gravity="center"
-            android:id="@android:id/empty"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#FF0000"
-            android:textStyle="normal|bold|italic" />
-
     </android.support.v4.widget.SwipeRefreshLayout>
 
 </RelativeLayout>

@@ -1,11 +1,13 @@
 package nl.melledijkstra.musicplayerclient.ui.adapters;
 
-import android.content.Context;
 import android.graphics.Typeface;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -18,56 +20,66 @@ import nl.melledijkstra.musicplayerclient.melonplayer.SongModel;
  * <p>Created by melle on 7-12-2016.</p>
  */
 
-public class SongAdapter extends BaseAdapter {
+public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder> {
 
     private static final String TAG = "SongAdapter";
 
-    private Context mContext;
+    /**
+     * Click listener for items in recyclerview
+     */
+    private final RecyclerItemClickListener listener;
+
     private ArrayList<SongModel> songModels;
 
-    public SongAdapter(Context mContext, ArrayList<SongModel> songModels) {
-        this.mContext = mContext;
+    public SongAdapter(ArrayList<SongModel> songModels, RecyclerItemClickListener listener) {
         this.songModels = songModels;
+        this.listener = listener;
     }
 
     @Override
-    public int getCount() {
+    public SongViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.song_item, parent, false);
+        return new SongViewHolder(itemView);
+    }
+
+    @Override
+    public void onBindViewHolder(SongViewHolder holder, int position) {
+        SongModel songModel = (position <= songModels.size()) ? songModels.get(position) : null;
+
+        final int hPosition = holder.getAdapterPosition();
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                listener.onItemClick(view, hPosition);
+            }
+        });
+
+        holder.tvTitle.setText(songModel != null ? songModel.getTitle() : null);
+        if (songModel != null && songModel.getDuration() != 0) {
+            holder.tvDuration.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+            holder.tvDuration.setText(Utils.millisecondsToDurationFormat(songModel.getDuration()));
+        } else {
+            holder.tvDuration.setTypeface(null, Typeface.ITALIC);
+            holder.tvDuration.setText("Undefined");
+        }
+    }
+
+    @Override
+    public int getItemCount() {
         return songModels.size();
     }
 
-    @Override
-    public SongModel getItem(int position) {
-        return songModels.get(position);
+    class SongViewHolder extends RecyclerView.ViewHolder {
+        TextView tvTitle, tvDuration;
+
+        SongViewHolder(View view) {
+            super(view);
+            tvTitle = (TextView) view.findViewById(R.id.song_title);
+            tvDuration = (TextView) view.findViewById(R.id.song_duration);
+        }
     }
 
-    @Override
-    public long getItemId(int position) {
-        return 0;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View item;
-        SongModel songModel = (position <= songModels.size()) ? songModels.get(position) : null;
-        if(convertView == null) {
-            item = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE))
-                    .inflate(R.layout.song_item, null);
-        } else {
-            item = convertView;
-        }
-
-        // song title
-        TextView tvTitle = (TextView) item.findViewById(R.id.song_title);
-        tvTitle.setText(songModel != null ? songModel.getTitle() : null);
-        TextView tvDuration = (TextView) item.findViewById(R.id.song_duration);
-        if(songModel != null && songModel.getDuration() != 0) {
-            tvDuration.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
-            tvDuration.setText(Utils.millisecondsToDurationFormat(songModel.getDuration()));
-        } else {
-            tvDuration.setTypeface(null, Typeface.ITALIC);
-            tvDuration.setText("Undefined");
-        }
-
-        return item;
+    public interface RecyclerItemClickListener {
+        void onItemClick(View view, int position);
     }
 }
