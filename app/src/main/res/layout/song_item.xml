@@ -24,4 +24,15 @@
         android:textSize="13sp"
         tools:text="00:04:20" />
 
+    <TextView
+        android:id="@+id/song_option_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
+        android:paddingStart="@dimen/activity_horizontal_margin"
+        android:text="&#8942;"
+        android:textAppearance="?android:textAppearanceLarge" />
+
 </RelativeLayout>

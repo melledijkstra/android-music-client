@@ -22,12 +22,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import nl.melledijkstra.musicplayerclient.App;
 import nl.melledijkstra.musicplayerclient.MelonPlayerService;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.config.Constants;
 import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
-import nl.melledijkstra.musicplayerclient.melonplayer.MelonPlayer;
 
 /**
  * <p>Created by Melle Dijkstra on 10-4-2016</p>
@@ -44,7 +46,9 @@ public class ConnectActivity extends AppCompatActivity {
     /**
      * UI Components
      */
+    @BindView(R.id.edittext_ip)
     EditText mEditTextIP;
+    @BindView(R.id.button_connect)
     Button mBtnConnect;
 
     /**
@@ -66,8 +70,11 @@ public class ConnectActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connect);
-
+        ButterKnife.bind(this);
         Log.i(TAG, "onCreate");
+
+        startService(new Intent(this, MelonPlayerService.class));
+        bindService(new Intent(this, MelonPlayerService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
 
         mBroadcastManager = LocalBroadcastManager.getInstance(this);
 
@@ -79,9 +86,6 @@ public class ConnectActivity extends AppCompatActivity {
         mSettings = PreferenceManager.getDefaultSharedPreferences(this);
 
         initializeUI();
-
-        startService(new Intent(this, MelonPlayerService.class));
-        bindService(new Intent(this, MelonPlayerService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -90,15 +94,8 @@ public class ConnectActivity extends AppCompatActivity {
     private void initializeUI() {
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
-        mEditTextIP = (EditText) findViewById(R.id.edittext_ip);
-        if (mEditTextIP != null) {
-            mEditTextIP.setText(mSettings.getString(PreferenceKeys.HOST_IP, Constants.DEFAULT_IP));
-        }
-        mBtnConnect = (Button) findViewById(R.id.button_connect);
-        if (mBtnConnect != null) {
-            mBtnConnect.requestFocus();
-            mBtnConnect.setOnClickListener(onConnectBtnClick);
-        }
+        mEditTextIP.setText(mSettings.getString(PreferenceKeys.HOST_IP, Constants.DEFAULT_IP));
+        mBtnConnect.requestFocus();
 
         mConnectDialog = new ProgressDialog(this);
     }
@@ -221,29 +218,27 @@ public class ConnectActivity extends AppCompatActivity {
         overridePendingTransition(R.anim.slidein, R.anim.slideout);
     }
 
-    private View.OnClickListener onConnectBtnClick = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (!App.DEBUG) {
-                final String ip = mEditTextIP.getText().toString();
+    @OnClick(R.id.button_connect)
+    public void onConnectButtonClick(View v) {
+        if (!App.DEBUG) {
+            final String ip = mEditTextIP.getText().toString();
 
-                // Save the data
-                SharedPreferences.Editor editor = mSettings.edit();
-                editor.putString(PreferenceKeys.HOST_IP, ip);
-                editor.apply();
-                Log.v(TAG, "IP Saved to preferences ("+ip+")");
+            // Save the data
+            SharedPreferences.Editor editor = mSettings.edit();
+            editor.putString(PreferenceKeys.HOST_IP, ip);
+            editor.apply();
+            Log.v(TAG, "IP Saved to preferences ("+ip+")");
 
-                // send broadcast to service that it needs to try connecting
-                LocalBroadcastManager.getInstance(ConnectActivity.this).sendBroadcast(new Intent(MelonPlayerService.INITIATE_CONNECTION));
+            // send broadcast to service that it needs to try connecting
+            LocalBroadcastManager.getInstance(ConnectActivity.this).sendBroadcast(new Intent(MelonPlayerService.INITIATE_CONNECTION));
 
-                mConnectDialog.setMessage("Connecting to " + ip + " ...");
-                mConnectDialog.setCancelable(false);
-                mConnectDialog.show();
-            } else {
-                startMainScreen();
-            }
+            mConnectDialog.setMessage("Connecting to " + ip + " ...");
+            mConnectDialog.setCancelable(false);
+            mConnectDialog.show();
+        } else {
+            startMainScreen();
         }
-    };
+    }
 
     @Override
     protected void onDestroy() {

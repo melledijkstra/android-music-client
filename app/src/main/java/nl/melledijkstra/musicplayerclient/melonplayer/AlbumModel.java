@@ -3,9 +3,6 @@ package nl.melledijkstra.musicplayerclient.melonplayer;
 import android.graphics.Bitmap;
 import android.support.annotation.Nullable;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.List;
 

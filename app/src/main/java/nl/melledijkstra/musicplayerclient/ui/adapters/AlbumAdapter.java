@@ -65,7 +65,7 @@ public class AlbumAdapter extends BaseAdapter {
 //        final ImageView favoriteImage = (ImageView) item.findViewById(R.id.favoriteImageView);
 //        favoriteImage.setOnClickListener(new View.OnClickListener() {
 //            @Override
-//            public void onClick(View v) {
+//            public void onPreviousClick(View v) {
 //                // TODO: Make albumModel actually favorite
 //                if(true) { //albumModel != null && albumModel.isFavorite()) {
 //                    favoriteImage.setImageResource(R.drawable.ic_action_star_10);

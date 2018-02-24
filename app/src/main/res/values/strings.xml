@@ -37,4 +37,14 @@
     <string name="enter_musicplayer_ip">MusicPlayer IP</string>
     <string name="album_cover">Album Cover</string>
     <string name="albums">Albums</string>
+    <string name="new_download">New Download</string>
+    <string name="download">Download</string>
+    <string name="change_volume">Change Volume</string>
+    <string name="duration_default_text">00:00:00</string>
+    <string name="song_options">Song Options</string>
+    <string name="rename">Rename</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="move">Move</string>
+    <string name="undefined">Undefined</string>
 </resources>

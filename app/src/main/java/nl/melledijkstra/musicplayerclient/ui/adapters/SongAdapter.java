@@ -2,16 +2,16 @@ package nl.melledijkstra.musicplayerclient.ui.adapters;
 
 import android.graphics.Typeface;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.view.ContextMenu;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.Utils;
 import nl.melledijkstra.musicplayerclient.melonplayer.SongModel;
@@ -25,15 +25,19 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
     private static final String TAG = "SongAdapter";
 
     /**
-     * Click listener for items in recyclerview
+     * Click itemClickListener for items in recyclerview
      */
-    private final RecyclerItemClickListener listener;
+    private RecyclerItemClickListener itemClickListener;
+    private final PopupMenu.OnMenuItemClickListener menuListener;
 
     private ArrayList<SongModel> songModels;
+    private Integer currentPopupPosition;
 
-    public SongAdapter(ArrayList<SongModel> songModels, RecyclerItemClickListener listener) {
+    public SongAdapter(ArrayList<SongModel> songModels, RecyclerItemClickListener itemClickListener,
+                       PopupMenu.OnMenuItemClickListener onMenuItemClickListener) {
         this.songModels = songModels;
-        this.listener = listener;
+        this.itemClickListener = itemClickListener;
+        this.menuListener = onMenuItemClickListener;
     }
 
     @Override
@@ -47,21 +51,32 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         SongModel songModel = (position <= songModels.size()) ? songModels.get(position) : null;
 
         final int hPosition = holder.getAdapterPosition();
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                listener.onItemClick(view, hPosition);
-            }
+        holder.itemView.setOnClickListener(view -> itemClickListener.onItemClick(view, hPosition));
+
+        holder.tvSongOptions.setOnClickListener(view -> {
+            currentPopupPosition = hPosition;
+            PopupMenu popup = new PopupMenu(view.getContext(), view);
+            popup.inflate(R.menu.song_item_menu);
+            popup.setOnMenuItemClickListener(menuListener);
+            popup.show();
         });
 
         holder.tvTitle.setText(songModel != null ? songModel.getTitle() : null);
         if (songModel != null && songModel.getDuration() != 0) {
             holder.tvDuration.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
-            holder.tvDuration.setText(Utils.millisecondsToDurationFormat(songModel.getDuration()));
+            holder.tvDuration.setText(Utils.secondsToDurationFormat(songModel.getDuration()));
         } else {
             holder.tvDuration.setTypeface(null, Typeface.ITALIC);
-            holder.tvDuration.setText("Undefined");
+            holder.tvDuration.setText(R.string.undefined);
         }
+    }
+
+    /**
+     * Gets the position of item where popup is currently shown, too bad Android doesn't make this a little easier
+     * @return The position of item where popup is shown
+     */
+    public Integer getPosition() {
+        return currentPopupPosition;
     }
 
     @Override
@@ -70,12 +85,16 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
     }
 
     class SongViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvDuration;
+        @BindView(R.id.song_title)
+        TextView tvTitle;
+        @BindView(R.id.song_duration)
+        TextView tvDuration;
+        @BindView(R.id.song_option_btn)
+        TextView tvSongOptions;
 
         SongViewHolder(View view) {
             super(view);
-            tvTitle = (TextView) view.findViewById(R.id.song_title);
-            tvDuration = (TextView) view.findViewById(R.id.song_duration);
+            ButterKnife.bind(this, view);
         }
     }
 

@@ -29,6 +29,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import nl.melledijkstra.musicplayerclient.config.Constants;
 import nl.melledijkstra.musicplayerclient.config.PreferenceKeys;
+import nl.melledijkstra.musicplayerclient.grpc.DataManagerGrpc;
 import nl.melledijkstra.musicplayerclient.grpc.MMPResponse;
 import nl.melledijkstra.musicplayerclient.grpc.MMPStatus;
 import nl.melledijkstra.musicplayerclient.grpc.MMPStatusRequest;
@@ -91,6 +92,9 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
                         previousIp = musicPlayerIp;
                         Log.i(TAG, "onReceive: initiating connection with grpc server");
                         initiateConnection(true);
+                    case ACTION_CLOSE:
+                        stopForeground(false);
+                        stopSelf();
                 }
             }
         }
@@ -123,6 +127,7 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
      */
     public MusicPlayerGrpc.MusicPlayerStub musicPlayerStub;
     public MediaDownloaderGrpc.MediaDownloaderStub mediaDownloaderStub;
+    public DataManagerGrpc.DataManagerStub dataManagerStub;
 
     /**
      * Flag if connection result should be broadcasted
@@ -182,7 +187,8 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         }
 
         @Override
-        public void onCompleted() {}
+        public void onCompleted() {
+        }
     };
 
     /**
@@ -197,7 +203,8 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
                 Log.e(TAG, "GRPC SERVER: " + response.getError());
             }
             if (!response.getMessage().isEmpty() && getApplicationContext() != null) {
-                Toast.makeText(getApplicationContext(), response.getMessage(), Toast.LENGTH_SHORT).show();
+                // TODO: create object out of StreamObserver so it accepts a context which can be used to create Toast
+                //Toast.makeText(getApplicationContext(), response.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -259,9 +266,6 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
                 case ACTION_NEXT:
                     musicPlayerStub.next(PlaybackControl.getDefaultInstance(), defaultMMPResponseStreamObserver);
                     break;
-                case ACTION_CLOSE:
-                    stopForeground(false);
-                    stopSelf();
             }
         }
 
@@ -297,6 +301,7 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         channel.notifyWhenStateChanged(state, grpcStateChangeListener);
         musicPlayerStub = MusicPlayerGrpc.newStub(channel);
         mediaDownloaderStub = MediaDownloaderGrpc.newStub(channel);
+        dataManagerStub = DataManagerGrpc.newStub(channel);
     }
 
     /**
@@ -346,6 +351,18 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
             @Override
             public void onNext(MMPStatus status) {
                 melonPlayer.setState(status);
+                // TODO: update the melonplayer and that should update notification
+                if (status.getState() == MMPStatus.State.PLAYING) {
+                    startForeground(NOTIFICATION_ID, musicPlaybackNotification);
+                } else {
+                    stopForeground(false);
+                }
+                SongModel song = melonPlayer.getCurrentSongModel();
+                String title = "-";
+                if (song != null) {
+                    title = song.getTitle();
+                }
+                updateNotification(title, melonPlayer.getState());
             }
 
             @Override
@@ -391,8 +408,10 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
      */
     private Notification generatePlaybackNotification(String message, MelonPlayer.States state) {
         // TODO: refactor this method
+        Intent deleteIntent = new Intent(this, MelonPlayerService.class);
+        deleteIntent.setAction(ACTION_CLOSE);
         notificationBuilder.setSmallIcon(R.drawable.notification_icon)
-                .setDeleteIntent(generatePendingIntent(ACTION_CLOSE))
+                .setDeleteIntent(PendingIntent.getBroadcast(this, 0, deleteIntent, PendingIntent.FLAG_CANCEL_CURRENT))
                 // make notification available on lock screen
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOnlyAlertOnce(true)
@@ -413,9 +432,11 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
                         .setShowActionsInCompactView(0, 2, 4) // Show shuffle, play/pause, and repeat in compact modes
                 )
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.default_cover))
-                .setContentTitle("Melon Music Player")
+                .setContentTitle(message)
+                .setSubText("Melon Music Player")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentText(message);
+                // TODO: change to album
+                .setContentText("-");
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -474,8 +495,10 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         if (state != null) {
             if (state == MelonPlayer.States.PLAYING) {
                 // TODO: set to pause button
+                //notificationBuilder.addAction(R.drawable.ic_pause, "Pause", generatePendingIntent(ACTION_PLAY_PAUSE));
             } else {
                 // TODO: set to play button
+                //notificationBuilder.addAction(R.drawable.ic_play_arrow, "Play", generatePendingIntent(ACTION_PLAY_PAUSE));
             }
         }
         notificationBuilder.setContentTitle(newTitle);
@@ -486,6 +509,9 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         return melonPlayer;
     }
 
+    /**
+     * Forcibly get the newest melon player status
+     */
     public void retrieveNewStatus() {
         musicPlayerStub.retrieveMMPStatus(MMPStatusRequest.getDefaultInstance(), statusStreamObserver);
     }
@@ -506,8 +532,10 @@ public class MelonPlayerService extends Service implements MelonPlayer.StateUpda
         public void onReceive(Context context, Intent intent) {
             try {
                 String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
+                Log.i(TAG, "PhoneStateReceiver: receiving new phone status: "+state);
                 // Check if phone is ringing
-                if (state.equals(TelephonyManager.EXTRA_STATE_RINGING) && melonPlayer.getVolume() != -1) {
+                if (state.equals(TelephonyManager.EXTRA_STATE_RINGING)
+                        || state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK) && melonPlayer.getVolume() != -1) {
                     Log.i(TAG, "Incoming call detected, turning down the volume"); // UX is everything ;)
                     volumeBeforeCalling = melonPlayer.getVolume();
                     // TODO: let user choose to what volume the music player should go on incoming call

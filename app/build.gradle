@@ -19,7 +19,13 @@ android {
         }
         debug {
             minifyEnabled false
+            versionNameSuffix '-dev'
+            applicationIdSuffix '.dev'
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
@@ -60,4 +66,6 @@ dependencies {
     implementation 'io.grpc:grpc-stub:1.9.0'
     implementation 'com.google.protobuf:protobuf-lite:3.0.1'
     implementation 'org.glassfish:javax.annotation:10.0-b28'
+    implementation 'com.jakewharton:butterknife:8.8.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 }

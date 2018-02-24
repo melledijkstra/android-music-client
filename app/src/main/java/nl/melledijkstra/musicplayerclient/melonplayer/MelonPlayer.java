@@ -3,11 +3,6 @@ package nl.melledijkstra.musicplayerclient.melonplayer;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
@@ -59,8 +54,8 @@ public class MelonPlayer {
     /** The current position of the song */
     private float songPosition = -1f;
 
-    /** The current time of the playing song */
-    private long currentTime = -1;
+    /** The elapsed time of the playing song */
+    private long elapsedTime = -1;
 
     // GETTERS
 
@@ -73,8 +68,8 @@ public class MelonPlayer {
         return songPosition;
     }
 
-    public long getCurrentTime() {
-        return currentTime;
+    public long getElapsedTime() {
+        return elapsedTime;
     }
 
     public States getState() {
@@ -135,7 +130,7 @@ public class MelonPlayer {
         }
         volume = status.getVolume();
         songPosition = status.getPosition();
-        // currentTime = status.getCurrentTime();
+        elapsedTime = status.getElapsedTime();
         mute = status.getMute();
 
         Log.d(TAG, String.format(Locale.getDefault(), "%s '%s' volume: %d, position: %f, mute: %b", state, currentSongModel, volume, songPosition, mute));

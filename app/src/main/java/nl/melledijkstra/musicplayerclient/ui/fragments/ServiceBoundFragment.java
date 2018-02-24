@@ -13,6 +13,7 @@ import nl.melledijkstra.musicplayerclient.MelonPlayerService;
 
 /**
  * Created by melle on 12-12-2016.
+ * Fragment class that binds to MelonPlayerService automatically
  */
 
 public class ServiceBoundFragment extends Fragment {
