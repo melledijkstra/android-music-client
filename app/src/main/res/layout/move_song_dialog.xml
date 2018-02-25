@@ -7,7 +7,7 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:text="New album location:"
+        android:text="@string/new_album_location"
         android:labelFor="@+id/spinnerAlbums"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

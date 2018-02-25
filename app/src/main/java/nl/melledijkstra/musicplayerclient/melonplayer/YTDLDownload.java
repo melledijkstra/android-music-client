@@ -1,53 +1,70 @@
 package nl.melledijkstra.musicplayerclient.melonplayer;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import nl.melledijkstra.musicplayerclient.grpc.MediaDownload;
 
 /**
- * Created by melle on 19-12-2016.
+ * <p>Created by melle on 19-12-2016.</p>
+ * Represents a media download at the server
  */
+public class YTDLDownload implements Protoble<MediaDownload> {
 
-public class YTDLDownload implements Hydratable {
-
+    /**
+     * The states a download can be in
+     */
     public enum States {
         DOWNLOADING,
         FINISHED,
         PROCESSING,
     }
 
+    /**
+     * The name of the download
+     */
     private String name;
+
+    /**
+     * The filename of the download
+     */
     private String filename;
+
+    /**
+     * The speed at which it is downloading
+     */
     private String speed;
+
+    /**
+     * The elapsed time of the download
+     */
     private String timeElapsed;
+
+    /**
+     * The estimated time it takes to download the media
+     */
     private String remainingTime;
+
+    /**
+     * Percentage of downloaded content
+     */
     private String percentDownloaded;
+
+    /**
+     * Total bytes downloaded
+     */
     private String totalBytes;
+
+    /**
+     * The current state of the download
+     */
     private States state;
 
-    public YTDLDownload(JSONObject data) {
+    public YTDLDownload(MediaDownload data) {
         this.Hydrate(data);
     }
 
     @Override
-    public void Hydrate(JSONObject obj) {
-        try {
-            if(obj.has("name")) name = obj.getString("name");
-            if(obj.has("filename")) filename = obj.getString("filename");
-            if(obj.has("state")) {
-                switch (obj.getString("state")) {
-                    case "downloading":
-                        state = States.DOWNLOADING;
-                        break;
-                    case "finished":
-                        state = States.FINISHED;
-                        break;
-                    case "processing":
-                        state = States.PROCESSING;
-                        break;
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+    public void Hydrate(MediaDownload obj) {
+        // TODO: implement this
+        throw new UnsupportedOperationException("Not implemented");
     }
+
 }

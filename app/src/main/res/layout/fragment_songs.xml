@@ -9,22 +9,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <ListView
+        <android.support.v7.widget.RecyclerView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/songListView"
             tools:listitem="@layout/song_item"
-            android:transcriptMode="normal"
-            android:choiceMode="singleChoice" />
-
-        <TextView
-            android:text="NO SONGS"
-            android:gravity="center"
-            android:id="@android:id/empty"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#FF0000"
-            android:textStyle="normal|bold|italic" />
+            android:scrollbars="vertical" />
 
     </android.support.v4.widget.SwipeRefreshLayout>
 

@@ -1,27 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
-    android:padding="5dp"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:orientation="vertical"
+    android:padding="5dp">
 
     <TextView
         android:id="@+id/song_title"
-        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:textSize="16sp"
+        android:layout_height="wrap_content"
         android:textColor="#212121"
-        tools:text="Test Song Title"
-        />
+        android:textSize="16sp"
+        tools:text="Test Song Title" />
 
     <TextView
-        android:layout_below="@id/song_title"
         android:id="@+id/song_duration"
-        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/song_title"
+        android:layout_marginTop="3dp"
         android:textSize="13sp"
-        tools:text="4:20"
-        android:layout_marginTop="3dp" />
+        tools:text="00:04:20" />
+
+    <TextView
+        android:id="@+id/song_option_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
+        android:paddingStart="@dimen/activity_horizontal_margin"
+        android:text="&#8942;"
+        android:textAppearance="?android:textAppearanceLarge" />
 
 </RelativeLayout>

@@ -37,7 +37,7 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
         Log.d(TAG, "preference changed: "+key);
         switch(key) {
             case PreferenceKeys.DEBUG:
-                ((App)getApplication()).updateDebugState();
+                ((App)getApplication()).checkDebugState();
         }
     }
 

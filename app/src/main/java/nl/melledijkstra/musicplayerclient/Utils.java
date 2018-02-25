@@ -36,15 +36,21 @@ public class Utils {
 
     /**
      * Check if a value is in in specific range
-     * @param value
-     * @param min
-     * @param max
-     * @return
+     * @param value Value to check in range
+     * @param min Minimum number in range
+     * @param max Maximum number in range
+     * @return If the value is inside the range
      */
     public static boolean inRange(int value, int min, int max) {
         return (value>= min) && (value<= max);
     }
 
+
+    /**
+     * Milliseconds to duration format
+     * @param millis The amount of milliseconds
+     * @return The seconds in `%02d:%02d:%02d` format
+     */
     public static String millisecondsToDurationFormat(long millis) {
         long second = (millis / 1000) % 60;
         long minute = (millis / (1000 * 60)) % 60;
@@ -53,8 +59,16 @@ public class Utils {
         return String.format(Locale.getDefault(),"%02d:%02d:%02d", hour, minute, second);
     }
 
-    public static int milliSecondsToSeconds(long millis) {
-        return (int) (millis / 1000);
-    }
+    /**
+     * Format seconds to a displayable format
+     * @param seconds The amount of seconds
+     * @return The seconds in `%02d:%02d:%02d` format
+     */
+    public static String secondsToDurationFormat(long seconds) {
+        long second = seconds % 60;
+        long minute = (seconds / 60) % 60;
+        long hour = (seconds / (60 * 60)) % 24;
 
+        return String.format(Locale.getDefault(),"%02d:%02d:%02d", hour, minute, second);
+    }
 }

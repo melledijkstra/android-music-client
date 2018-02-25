@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="text|textUri"
-        android:hint="Youtube URL" />
+        android:hint="@string/hint_youtube_url" />
 
     <Spinner
         android:id="@+id/spinChooseAlbum"

@@ -40,7 +40,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0:00"
+            android:text="@string/time_placeholder"
             android:id="@+id/tvSongCurPos"
             android:layout_gravity="start"
             android:layout_weight="1"
@@ -49,7 +49,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0:00"
+            android:text="@string/time_placeholder"
             android:layout_gravity="end"
             android:id="@+id/tvSongDuration"
             android:layout_weight="1"

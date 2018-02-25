@@ -1,28 +1,71 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.protobuf'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 25
     buildToolsVersion "27.0.3"
 
     defaultConfig {
         applicationId "nl.melledijkstra.musicplayerclient"
         minSdkVersion 17
-        targetSdkVersion 26
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
     }
     buildTypes {
         release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            versionNameSuffix '-dev'
+            applicationIdSuffix '.dev'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.5.0'
+    }
+    plugins {
+        javalite {
+            artifact = 'com.google.protobuf:protoc-gen-javalite:3.0.0'
+        }
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.9.0'
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                remove java
+            }
+            task.plugins {
+                javalite {}
+                grpc {
+                    // options added to --grpc-out
+                    option 'lite'
+                }
+            }
         }
     }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.4.0'
-    compile 'com.android.support:support-v4:23.4.0'
-    compile 'com.android.support:design:23.4.0'
+    implementation 'com.android.support:appcompat-v7:25.4.0'
+    implementation 'com.android.support:recyclerview-v7:25.4.0'
+    implementation 'com.android.support:design:25.4.0'
+    implementation 'io.grpc:grpc-okhttp:1.9.0'
+    implementation 'io.grpc:grpc-protobuf-lite:1.9.0'
+    implementation 'io.grpc:grpc-stub:1.9.0'
+    implementation 'com.google.protobuf:protobuf-lite:3.0.1'
+    implementation 'org.glassfish:javax.annotation:10.0-b28'
+    implementation 'com.jakewharton:butterknife:8.8.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 }

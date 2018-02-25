@@ -1,72 +1,104 @@
 package nl.melledijkstra.musicplayerclient.ui.adapters;
 
-import android.content.Context;
 import android.graphics.Typeface;
-import android.renderscript.Type;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
-import nl.melledijkstra.musicplayerclient.App;
+import java.util.ArrayList;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import nl.melledijkstra.musicplayerclient.R;
 import nl.melledijkstra.musicplayerclient.Utils;
-import nl.melledijkstra.musicplayerclient.melonplayer.Album;
-import nl.melledijkstra.musicplayerclient.melonplayer.Song;
+import nl.melledijkstra.musicplayerclient.melonplayer.SongModel;
 
 /**
- * Created by melle on 7-12-2016.
+ * <p>Created by melle on 7-12-2016.</p>
  */
 
-public class SongAdapter extends BaseAdapter {
+public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder> {
 
-    private static final String TAG = SongAdapter.class.getSimpleName();
-    private Context mContext;
-    private Album album;
+    private static final String TAG = "SongAdapter";
 
-    public SongAdapter(Context mContext, long albumid) {
-        this.mContext = mContext;
-        this.album = App.melonPlayer.findAlbum(albumid);
+    /**
+     * Click itemClickListener for items in recyclerview
+     */
+    private RecyclerItemClickListener itemClickListener;
+    private final PopupMenu.OnMenuItemClickListener menuListener;
+
+    private ArrayList<SongModel> songModels;
+    private Integer currentPopupPosition;
+
+    public SongAdapter(ArrayList<SongModel> songModels, RecyclerItemClickListener itemClickListener,
+                       PopupMenu.OnMenuItemClickListener onMenuItemClickListener) {
+        this.songModels = songModels;
+        this.itemClickListener = itemClickListener;
+        this.menuListener = onMenuItemClickListener;
     }
 
     @Override
-    public int getCount() {
-        return album.getSongList().size();
+    public SongViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.song_item, parent, false);
+        return new SongViewHolder(itemView);
     }
 
     @Override
-    public Song getItem(int position) {
-        return album.getSongList().get(position);
-    }
+    public void onBindViewHolder(SongViewHolder holder, int position) {
+        SongModel songModel = (position <= songModels.size()) ? songModels.get(position) : null;
 
-    @Override
-    public long getItemId(int position) {
-        return 0;
-    }
+        final int hPosition = holder.getAdapterPosition();
+        holder.itemView.setOnClickListener(view -> itemClickListener.onItemClick(view, hPosition));
 
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View item;
-        Song song = (position <= album.getSongList().size()) ? album.getSongList().get(position) : null;
-        if(convertView == null) {
-            item = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.song_item, null);
+        holder.tvSongOptions.setOnClickListener(view -> {
+            currentPopupPosition = hPosition;
+            PopupMenu popup = new PopupMenu(view.getContext(), view);
+            popup.inflate(R.menu.song_item_menu);
+            popup.setOnMenuItemClickListener(menuListener);
+            popup.show();
+        });
+
+        holder.tvTitle.setText(songModel != null ? songModel.getTitle() : null);
+        if (songModel != null && songModel.getDuration() != 0) {
+            holder.tvDuration.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+            holder.tvDuration.setText(Utils.secondsToDurationFormat(songModel.getDuration()));
         } else {
-            item = convertView;
+            holder.tvDuration.setTypeface(null, Typeface.ITALIC);
+            holder.tvDuration.setText(R.string.undefined);
         }
+    }
 
-        // song title
-        TextView tvTitle = (TextView) item.findViewById(R.id.song_title);
-        tvTitle.setText(song != null ? song.getTitle() : null);
-        TextView tvDuration = (TextView) item.findViewById(R.id.song_duration);
-        if(song != null && song.getDuration() != null) {
-            tvDuration.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
-            tvDuration.setText(Utils.millisecondsToDurationFormat(song.getDuration()));
-        } else {
-            tvDuration.setTypeface(null, Typeface.ITALIC);
-            tvDuration.setText("Undefined");
+    /**
+     * Gets the position of item where popup is currently shown, too bad Android doesn't make this a little easier
+     * @return The position of item where popup is shown
+     */
+    public Integer getPosition() {
+        return currentPopupPosition;
+    }
+
+    @Override
+    public int getItemCount() {
+        return songModels.size();
+    }
+
+    class SongViewHolder extends RecyclerView.ViewHolder {
+        @BindView(R.id.song_title)
+        TextView tvTitle;
+        @BindView(R.id.song_duration)
+        TextView tvDuration;
+        @BindView(R.id.song_option_btn)
+        TextView tvSongOptions;
+
+        SongViewHolder(View view) {
+            super(view);
+            ButterKnife.bind(this, view);
         }
+    }
 
-        return item;
+    public interface RecyclerItemClickListener {
+        void onItemClick(View view, int position);
     }
 }
