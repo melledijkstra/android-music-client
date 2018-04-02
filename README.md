@@ -3,16 +3,16 @@
 ## Impression
 
 The album list:
-![Album List](project-files/albumlist.png)
+![Album List](project-files/albumlist-small.png)
 
 The song list:
-![Song List](project-files/songlist.png)
+![Song List](project-files/songlist-small.png)
 
 Media notification for playback:
-![Playback Notification](project-files/ongoing-notification.png)
+![Playback Notification](project-files/ongoing-notification-small.png)
 
 Youtube download:
-![Youtube Download](project-files/youtube-download.png)
+![Youtube Download](project-files/youtube-download-small.png)
 
 ## TODO
 
