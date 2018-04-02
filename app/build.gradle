@@ -4,28 +4,31 @@ apply plugin: 'com.google.protobuf'
 android {
     compileSdkVersion 25
     buildToolsVersion "27.0.3"
-
     defaultConfig {
         applicationId "nl.melledijkstra.musicplayerclient"
         minSdkVersion 17
         targetSdkVersion 25
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "3.0.0-alpha"
     }
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            debuggable false
         }
         debug {
             minifyEnabled false
             versionNameSuffix '-dev'
+            debuggable true
             applicationIdSuffix '.dev'
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    productFlavors {
     }
 }
 
@@ -58,14 +61,14 @@ protobuf {
 }
 
 dependencies {
-    implementation 'com.android.support:appcompat-v7:25.4.0'
-    implementation 'com.android.support:recyclerview-v7:25.4.0'
-    implementation 'com.android.support:design:25.4.0'
-    implementation 'io.grpc:grpc-okhttp:1.9.0'
-    implementation 'io.grpc:grpc-protobuf-lite:1.9.0'
-    implementation 'io.grpc:grpc-stub:1.9.0'
-    implementation 'com.google.protobuf:protobuf-lite:3.0.1'
-    implementation 'org.glassfish:javax.annotation:10.0-b28'
-    implementation 'com.jakewharton:butterknife:8.8.1'
+    compile 'com.android.support:appcompat-v7:25.4.0'
+    compile 'com.android.support:recyclerview-v7:25.4.0'
+    compile 'com.android.support:design:25.4.0'
+    compile 'io.grpc:grpc-okhttp:1.9.0'
+    compile 'io.grpc:grpc-protobuf-lite:1.9.0'
+    compile 'io.grpc:grpc-stub:1.9.0'
+    compile 'com.google.protobuf:protobuf-lite:3.0.1'
+    compile 'org.glassfish:javax.annotation:10.0-b28'
+    compile 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 }
