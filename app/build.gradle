@@ -11,6 +11,9 @@ android {
         versionCode 3
         versionName "3.0.0-alpha"
     }
+    lintOptions {
+        abortOnError false
+    }
     buildTypes {
         release {
             minifyEnabled true
