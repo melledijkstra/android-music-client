@@ -1,0 +1,7 @@
+language: android
+android:
+  components:
+    # build for SDK version 25
+    - android-25
+    - build-tools-27.0.3
+
